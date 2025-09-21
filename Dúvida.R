@@ -1,0 +1,1 @@
+Este ficheiro destina-se ao registo de dúvidas que surgirem ao longo do desenvolvimento do projeto Capstone.
