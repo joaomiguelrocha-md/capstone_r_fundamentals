@@ -1,0 +1,3 @@
+gdh_base <-  import("/data/data_gdh/base_gdh_icd10_no_freg.csv")
+
+
