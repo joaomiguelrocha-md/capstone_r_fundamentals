@@ -147,7 +147,7 @@ gdh_base_clean <- clean_names(gdh_base_raw)
 
 str(gdh_base_clean)
 
-code_residence <- code_residence |> 
+# code_residence <- code_residence |> 
   clean_names() |> 
   select(
     cod_dist, 
@@ -161,7 +161,7 @@ comm_pt <- comm_pt |>
 
 
 # preparar base dados code_residence e  para join 
-code_residence <- code_residence |> 
+code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
   mutate(
     across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
     dt_mun = paste0(cod_dist_chr, cod_conc_chr)
@@ -183,7 +183,7 @@ geo_linkage <- geo_linkage |>
          )
   
 
-geolink_target <- c("dt_mun", "dicofre_2025", "distrito_2013", "municipio_2013", "uls_2024", "nuts2_2024", "nuts2_2024_cod", "nuts3_2024", "nuts3_2024_cod", "regiao_2024", "freguesia_2025", "abreviatura_freguesia_2025", "fr_2025" )
+geolink_target <- c("dt_mun", "dicofre_2025", "distrito_2013", "municipio_2013", "uls_2024", "nuts2_2024", "nuts2_2024_cod", "nuts3_2024", "nuts3_2024_cod", "regiao_2024")
 
 geo_linkage_target <- geo_linkage |> 
   select(all_of(geolink_target)) |> 
@@ -201,8 +201,9 @@ gdh_geo_join <- gdh_base_clean |>
     by = "dt_mun") 
 
 gdh_uls <- gdh_geo_join |> 
-  filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")
-  )
+  filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
+
+
 
 ```
 
@@ -254,6 +255,23 @@ p1 <- gdh_uls |>
 
 p1
 
+# grafico barras por uls e severidade problema - considerar fazer dois separados "dodge" 
+# como fazer aparecer por percentagens? 
+
+p2 <- gdh_uls |> 
+  count(uls_2024, severidade_apr31) |> 
+  mutate(freq = (n / sum(n))) |> 
+  mutate(cum = cumsum(freq)) |> 
+  ggplot(
+    aes(x = uls_2024, y = freq, fill = severidade_apr31)
+    )+
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_viridis_d(end = .5) +
+  geom_text(aes(label = freq), position = position_stack(vjust = .95), colour = "white") +
+  labs(fill = "severidade_apr31", y = "Proportion", x = "ULS 2024")
+
+
+p2
 
 
 
