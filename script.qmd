@@ -1,7 +1,7 @@
 ---
 title: "Capstone"
-subtitle: "Atualizacao"
-author: "JMR; IVT"
+subtitle: "TBA"
+author: "IVT; JMR"
 course: 
     - Fundamentos de Data Science na Saúde: Aplicações com R, Escola Nacional de Saúde Pública
 date: today
@@ -35,36 +35,83 @@ execute:
   message: false
 ---
 
-# Introdução
+# 1. Introdução (Contexto)
 
 O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Science em R**, tem como objetivo aplicar os conhecimentos adquiridos sobre manipulação, exploração, visualização e modelação de dados, utilizando uma base de dados real — a **base modificada de morbilidade hospitalar do SNS (GDH da ACSS)**.
 
+**Bases de dados utilizadas**
+
+-   base_gdh_2017_icd10_no_freg
+
+-   codigos_residencia
+
+-   codigos_diagnostico_icd10
+
+-   geo_linkage_2024_v6
+
+-   grupos_gdh
 
 ------------------------------------------------------------------------
 
-# Objetivos do estudo
+# 2. Objetivos do estudo
 
-## Objetivo geral
+## 2.1. Objetivo geral
 
+O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave e Amadora-Sintra.
 
+## 2.2. Objetivos específicos
 
-------------------------------------------------------------------------
+-   Caracterizar a população residente nos concelhos correspondentes às áreas das ULS
 
-# 1. Importação e preparação dos dados
+    -   distribuição idades, sexo
+
+    -   problemas de saúde (total por nível de risco mortalidade e severidade)
+
+-   Caracterizar os problemas de saúde e identificar os mais prevalentes
+
+    -   comparar totais, áreas,
+
+-   Comparar resposta por hospital
+
+    -   tempos de internamento para problemas semelhantes (mesma codificaçao)
+
+        -   decidir se por gcd ou gcd + icd10 - questão codificação está efetivamente correta???
+
+        -   reinternamentos (episodio - alta - episodio - calcular tempo entre episodios ou entre alta e novo episodio) - discutir limitações
+
+        -   
+
+        -   
+
+# 3. Importação e preparação dos dados
 
 ```{r}
 #| warning: false
 #| message: false
 #| error: false
 
+set.seed(123)
 
 rm(list = ls(all.names = TRUE)) 
 required_packages <- c(
-                       "assertr",
-                       "data.validator",
-                       "janitor",
                        "tidyverse",
-                       "rio"
+                       "rio",
+                       "scales",
+                       "here",
+                       "patchwork",
+                       "sf", 
+                       "ggthemes",
+                       "giscoR",
+                       "eurostat",
+                       "sysfonts", 
+                       "showtext", 
+                       "scales",
+                       "geodata", 
+                       "osmdata", 
+                       "leaflet",
+                       "janitor",
+                       "assertr",
+                       "data.validator"
                        )      
 
 for (pkg in required_packages) {
@@ -81,29 +128,144 @@ remove(pkg)
 ```
 
 ```{r importation and cleaning}
-base_gdh <- import("datasets/base_gdh_icd10_no_freg.csv")
+gdh_base_raw <-  import("data/data_gdh/base_gdh_icd10_no_freg.csv")
+
+code_residence <- import("data/data_gdh/codigos_residencia.csv")
+
+geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
+
+comm_pt <- st_read("data/map_json_portugal/concelhos_portugal_light.json")
 
 ```
 
-# 2. Limpeza e transformação das variáveis
-
+## Limpeza e transformação das variáveis
 
 ```{r }
 
-base_gdh <- clean_names(base_gdh)
+# 
+gdh_base_clean <- clean_names(gdh_base_raw)
+
+str(gdh_base_clean)
+
+code_residence <- code_residence |> 
+  clean_names() |> 
+  select(
+    cod_dist, 
+    cod_conc,
+    des_dcf
+  )
+
+
+comm_pt <- comm_pt |>
+  rename(geodsg = NAME_2)
+
+
+# preparar base dados code_residence e  para join 
+code_residence <- code_residence |> 
+  mutate(
+    across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
+    dt_mun = paste0(cod_dist_chr, cod_conc_chr)
+    )
+
+gdh_base_clean <- gdh_base_clean |> 
+  rename(
+    cod_dist = distrito,
+    cod_conc = concelho
+  ) |> 
+  mutate(
+    across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
+    dt_mun = paste0(cod_dist_chr, cod_conc_chr)
+    )
+
+geo_linkage <- geo_linkage |>
+  mutate(
+    dt_mun = str_pad(as.character(dt_mun), 4, pad = 0)
+         )
+  
+
+geolink_target <- c("dt_mun", "dicofre_2025", "distrito_2013", "municipio_2013", "uls_2024", "nuts2_2024", "nuts2_2024_cod", "nuts3_2024", "nuts3_2024_cod", "regiao_2024", "freguesia_2025", "abreviatura_freguesia_2025", "fr_2025" )
+
+geo_linkage_target <- geo_linkage |> 
+  select(all_of(geolink_target)) |> 
+  distinct(dt_mun, .keep_all = TRUE)
+
+# residence_geo_join <- geo_linkage_target |> 
+  # left_join(
+  #   code_residence,
+  #   geo_linkage_target,
+  #   by = "dt_mun") 
+
+gdh_geo_join <- gdh_base_clean |> 
+  left_join(
+    geo_linkage_target,
+    by = "dt_mun") 
+
+gdh_uls <- gdh_geo_join |> 
+  filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")
+  )
+
 ```
 
+## Documento erros da base e o que fez para os resolver
 
-# 3. Análise exploratória dos dados
+-   Codigos Municipio Base geo_linkage v6 - mais do que uma entrada para codigo dt_mun
+
+    -   Resoluçao: apagar duplicados, manter apenas um codigo por distrito e concelho
+
+-   
+
+# 4. Análise exploratória dos dados
+
+## Problemas:
+
+-   adm_tip - apenas dois tipos presentes na base de dados (urgente e programado)
+
+-   hora_urgencia, hora_entrada - valores em falta
+
+-   
+
+```{r}
+# valores únicos 
+# hosp_id <- distinct(gdh_base, hosp_id)
+# 
+# tipo_adm <- distinct(gdh_base, adm_tip)
+# 
+# patient_id <- distinct(gdh_base, seq_number)
+# 
+# total_patients <- length(patient_id$seq_number)
+# 
+# patient_id <- patient_id |> 
+#   mutate(
+#     age_group = length(patient_id$seq_number)
+#   )
+
+p1 <- gdh_uls |> 
+  ggplot(aes(x = uls_2024, fill = sexo)) +
+  geom_bar() +
+  scale_fill_viridis_d(end = .5) +
+  theme(
+   # axis.text.y = element_blank(),
+    # axis.ticks.y = element_blank(),
+    axis.line.x  = element_blank(),
+    axis.line.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    )
+
+p1
 
 
-# Referências
 
-::: {#refs}
-:::
 
+```
+
+# 5. Visualização dos dados
 
 ```{r}
 
 ```
 
+# 6. Bibliografia/Referências
+
+::: {#refs}
+:::
