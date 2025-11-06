@@ -1,6 +1,6 @@
 ---
 title: "Capstone"
-subtitle: "Atualizacao"
+subtitle: "Diferenças regionais na severidade e duração dos internamentos hospitalares no SNS"
 author: "JMR; IVT"
 course: 
     - Fundamentos de Data Science na Saúde: Aplicações com R, Escola Nacional de Saúde Pública
@@ -39,6 +39,7 @@ execute:
 
 O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Science em R**, tem como objetivo aplicar os conhecimentos adquiridos sobre manipulação, exploração, visualização e modelação de dados, utilizando uma base de dados real — a **base modificada de morbilidade hospitalar do SNS (GDH da ACSS)**.
 
+A análise centra-se em compreender as xxxxxx.
 
 ------------------------------------------------------------------------
 
@@ -101,6 +102,9 @@ base_gdh <- clean_names(base_gdh)
 
 ::: {#refs}
 :::
+
+The `echo: false` option disables the printing of code (only output is displayed).
+
 
 
 ```{r}

@@ -1,0 +1,24 @@
+{
+    "sources": [
+        {
+            "author": [
+                {
+                    "literal": "Direção-Geral da Saúde"
+                }
+            ],
+            "id": "dgs2025sarampo",
+            "issued": {
+                "date-parts": [
+                    [
+                        2025
+                    ]
+                ]
+            },
+            "note": "Acesso em: 26 set. 2025",
+            "publisher": "Serviço Nacional de Saúde; https://www.sns24.gov.pt/pt/tema/doencas/doencas-infecciosas/sarampo/",
+            "title": "Sarampo",
+            "type": ""
+        }
+    ],
+    "project_biblios": []
+}
