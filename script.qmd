@@ -55,6 +55,8 @@ O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Scien
 
 # 2. Objetivos do estudo
 
+-   pensar na mensagem/historia
+
 ## 2.1. Objetivo geral
 
 O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave e Amadora-Sintra.
@@ -148,12 +150,12 @@ gdh_base_clean <- clean_names(gdh_base_raw)
 str(gdh_base_clean)
 
 # code_residence <- code_residence |> 
-  clean_names() |> 
-  select(
-    cod_dist, 
-    cod_conc,
-    des_dcf
-  )
+  # clean_names() |> 
+  # select(
+  #   cod_dist, 
+  #   cod_conc,
+  #   des_dcf
+  # )
 
 
 comm_pt <- comm_pt |>
@@ -161,11 +163,11 @@ comm_pt <- comm_pt |>
 
 
 # preparar base dados code_residence e  para join 
-code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
-  mutate(
-    across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
-    dt_mun = paste0(cod_dist_chr, cod_conc_chr)
-    )
+# code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
+#   mutate(
+#     across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
+#     dt_mun = paste0(cod_dist_chr, cod_conc_chr)
+#     )
 
 gdh_base_clean <- gdh_base_clean |> 
   rename(
@@ -240,6 +242,27 @@ gdh_uls <- gdh_geo_join |>
 #     age_group = length(patient_id$seq_number)
 #   )
 
+# Criar as categorias (ESP 2013)
+gdh_uls <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(
+      idade,
+      breaks = c(0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45,
+                 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
+      right = FALSE
+    )
+  )
+
+# Contar total de observações por grupo etário
+contagem_idade <- gdh_uls %>%
+  group_by(uls_2024, as.factor(sexo), idade_cat) %>%
+  summarise(total = n()) %>%
+  arrange(idade_cat)
+
+
+# Visualiza o resultado
+print(contagem_idade)
+
 p1 <- gdh_uls |> 
   ggplot(aes(x = uls_2024, fill = sexo)) +
   geom_bar() +
@@ -270,10 +293,26 @@ p2 <- gdh_uls |>
   geom_text(aes(label = freq), position = position_stack(vjust = .95), colour = "white") +
   labs(fill = "severidade_apr31", y = "Proportion", x = "ULS 2024")
 
+# low hanging fruit: residentes municipio (INE) 2017 - 
+# NAs - tirar valores; retirar variaveis?; 
+# merge()
+# fazer tabela com os missings 
 
 p2
 
+p3 <- gdh_uls |> 
+  count(uls_2024, mortalidade_apr31) |> 
+  mutate(freq = (n / sum(n))) |> 
+  mutate(cum = cumsum(freq)) |> 
+  ggplot(
+    aes(x = uls_2024, y = freq, fill = mortalidade_apr31)
+    )+
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_viridis_d(end = .5) +
+  geom_text(aes(label = freq), position = position_stack(vjust = .95), colour = "white") +
+  labs(fill = "mortalidade_apr31", y = "Proportion", x = "ULS 2024")
 
+p3
 
 ```
 
