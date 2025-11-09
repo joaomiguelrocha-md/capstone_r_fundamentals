@@ -59,7 +59,7 @@ O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Scien
 
 -   grupos_gdh
 
--   INE - Populacao 2013 -
+-   INE - Populacao 2017 -
 
 ## We \<3 chat
 
@@ -145,7 +145,15 @@ required_packages <- c(
                        "janitor",
                        "assertr",
                        "data.validator",
-                       "forcats"
+                       "forcats",
+                       "data.table",
+                       "broom",
+                       "gt",
+                       "gtsummary",
+                       "glm2",
+                       "performance",
+                       "see",
+                       "readxl"
                        )      
 
 for (pkg in required_packages) {
@@ -169,6 +177,7 @@ code_residence <- import("data/data_gdh/codigos_residencia.csv")
 geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
 
 comm_pt <- st_read("data/map_json_portugal/concelhos_portugal_light.json")
+
 
 # residentes_2013 <- read_delim("data/populacao_residente_2013.csv", 
 #     delim = ";", 
@@ -208,6 +217,7 @@ comm_pt <- comm_pt |>
 #     )
 
 gdh_base_clean <- gdh_base_raw |> 
+  clean_names() |> 
   rename(
     cod_dist = distrito,
     cod_conc = concelho,
@@ -223,21 +233,49 @@ icd10_codes_pt <- icd10_codes |>
   clean_names() |>
   rename(
     descricao_pt = pt,
+    descricao_en = short_descp_icd_10_cm, 
     icd10_code = codigo_icd_10_cm
   ) |> 
   select(
     icd10_code,
+    descricao_en,
     descricao_pt
   ) |> 
   mutate(
     code_length = nchar(icd10_code)
-  )
+  ) |> 
+  distinct(icd10_code, .keep_all = TRUE)
+
+# identificar duplicados (EXISTIAM!! foi necessario apagar ver distinct())
+icd10_codes_pt %>% 
+  count(icd10_code, code_length) %>%
+  filter(n > 1)
 
 # join gdh group and icd10 codes
 gdh_base_join <- gdh_base_clean |> 
-  inner_join(
-    icd10_codes_pt, by = "icd10_code"
+  left_join(
+    icd10_codes_pt, by = c("icd10_code", "code_length")
+  ) |> 
+  left_join(
+    gdh_group, by = "gcd_apr31"
+    )
+
+# join grandes grupos (gcd_apr31)
+#verificar duplicados - não há
+gdh_group <- gdh_group |> 
+  clean_names() |> 
+  rename(
+    descricao_apr31 = designacao
   )
+
+gdh_group%>% 
+  count(gcd_apr31) %>%
+  filter(n > 1)
+
+
+
+# join concelho e municipio 
+# foi necessario criar vetor - passar de int a chr 
 
 geo_linkage <- geo_linkage |>
   mutate(
@@ -245,9 +283,9 @@ geo_linkage <- geo_linkage |>
          )
   
 
-geolink_target <- c("dt_mun", "dicofre_2025", "distrito_2013", "municipio_2013", "uls_2024", "nuts2_2024", "nuts2_2024_cod", "nuts3_2024", "nuts3_2024_cod", "regiao_2024")
+geolink_target <- c("dt_mun", "distrito_2013", "municipio_2013", "uls_2024", "regiao_2024", "nuts3_2013", "nuts3_2013_cod", "nuts3_2024", "nuts3_2024_cod", "municipio_2024_cod", "uls_2023", "uls_hierarquia_csp")
 
-geo_linkage_target <- geo_linkage |> 
+geo_linkage_clean <- geo_linkage |> 
   select(all_of(geolink_target)) |> 
   distinct(dt_mun, .keep_all = TRUE)
 
@@ -257,22 +295,23 @@ geo_linkage_target <- geo_linkage |>
   #   geo_linkage_target,
   #   by = "dt_mun") 
 
-gdh_geo_join <- gdh_base_clean |> 
+gdh_join_final <- gdh_base_join |> 
   left_join(
-    geo_linkage_target,
+    geo_linkage_clean,
     by = "dt_mun") 
 
 # Base de dados apenas com ULS Amadora/Sintra, ULS Médio Ave
-gdh_uls <- gdh_geo_join |> 
+gdh_uls <- gdh_join_final |> 
   filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
 
 
 
-gdh_group <- gdh_group |> 
-  clean_names() |> 
-  rename(
-    
-  )
+# FUNCOES
+# distribuicao_idade <- function(data, uls) |> 
+#   ggplot() |> 
+#   geom_jitter(aes(x = idade, y = dias_internamento, fill = sexo)) +
+#   
+# p1 <- distribuicao_idade(gdh_base_clean, "uls medio ave")
 ```
 
 ## Documento erros da base e o que fez para os resolver
@@ -310,22 +349,64 @@ gdh_group <- gdh_group |>
 #     age_group = length(patient_id$seq_number)
 #   )
 
+# Criar as categorias (European Standard Population (ESP) 2013 e INE) 
+gdh_uls <- gdh_uls |> 
+  mutate(
+    idade_cat_eu = cut(
+      idade,
+      breaks = c(0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45,
+                 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
+      right = FALSE), # Criar nova categoria com divisão do grupo etário do Eurostat para análise
+      idade_cat_ine = cut(
+      idade,
+      breaks = c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45,
+                 50, 55, 60, 65, 70, 75, 80, 85, Inf), 
+      right = FALSE) # Criar nova categoria com divisão do grupo etário do INE para análise
+  )
+
+
 # Total Episódios por ULS e Tipo de episodio 
 total_ep_uls <- gdh_uls |> 
   group_by(uls_2024, adm_tip) %>%
   summarise(total = n()) %>%
   arrange(uls_2024)
 
-# Criar as categorias (ESP 2013)
-gdh_uls <- gdh_uls |> 
-  mutate(
-    idade_cat = cut(
-      idade,
-      breaks = c(0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45,
-                 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
-      right = FALSE
-    )
-  )
+# boxplot ?  
+
+
+# 
+total_uls_sex_age <- gdh_uls |> 
+  group_by(uls_2024, adm_tip, sexo = as.factor(sexo), idade_cat_ine) %>%
+  summarise(total = n()) %>%
+  arrange(uls_2024)
+
+
+tabela1 <- tbl_summary(
+  gdh_uls,
+  include = c(uls_2024, adm_tip, sexo, idade_cat_ine),
+  by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
+  missing = "ifany", # Excluir dados ausentes do resumo
+) |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
+  add_n() |>  # Adicionar uma coluna para contar observações não ausentes
+  # add_p() |>  # Realizar testes estatísticos para comparar grupos
+  modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
+  bold_labels() # Tornar as etiquetas em negrito para ênfase
+
+tabela1 <- tabela1 |> 
+  as_gt() |>  
+  tab_header(
+    title = md("**Risco por ULS**") ,
+    subtitle = "Por sexo e idade"
+  ) |>
+  tab_source_note(
+    source_note = md("Fonte: gdh")
+  ) |>
+  fmt_number( decimals = 3) |>   
+  opt_stylize(style = 1, color = "gray") |> 
+  opt_align_table_header(align = "left") 
+
+tabela1
 
 # Contar total de observações por grupo etário
 contagem_idade <- gdh_uls %>%
