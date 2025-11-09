@@ -47,7 +47,18 @@ execute:
 >
 > -   Utilize pelo menos 3 funcionalidades do módulo 2 (referências, inline coding, adicionar imagem).
 
-O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Science em R**, tem como objetivo aplicar os conhecimentos adquiridos sobre manipulação, exploração, visualização e modelação de dados, utilizando uma base de dados real — a **base modificada de morbilidade hospitalar do SNS (GDH da ACSS)**.
+O presente projeto foi desenvolvido no âmbito do **Capstone** do curso [**Fundamentos de Data Science na Saúde: Aplicações com R**](https://www.ensp.unl.pt/curso/fundamentos-de-data-science-na-saude-aplicacoes-com-r/) da [**Escola Nacional de Saúde Pública**](https://www.ensp.unl.pt/) [@ENSP_FundamentosDataScience2025].
+
+![](images/RStudio_logo_flat.svg.png){width="295"} 
+Fonte: [@RStudioLogo]
+
+O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
+
+### A ULS
+
+-   imagem
+
+-   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2013 ou 2024)
 
 **Bases de dados utilizadas**
 
@@ -60,18 +71,6 @@ O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Scien
 -   grupos_gdh
 
 -   INE - Populacao 2017 -
-
-## We \<3 chat
-
-O presente projeto integra o Capstone do curso “Fundamentos de Data Science na Saúde: Aplicações com R”, promovido pela Escola Nacional de Saúde Pública. O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
-
-### A ULS
-
--   imagem
-
--   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2013 ou 2024)
-
--   
 
 ------------------------------------------------------------------------
 
@@ -575,4 +574,8 @@ concelho/ULS
 # 6. Bibliografia/Referências
 
 ::: {#refs}
+:::
+
+::: callout-note
+A versão deste documento foi atualizada no dia **`r format(Sys.Date(), "%d/%m/%Y")`**.
 :::
