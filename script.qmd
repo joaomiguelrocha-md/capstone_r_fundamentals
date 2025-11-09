@@ -408,6 +408,34 @@ tabela1 <- tabela1 |>
 
 tabela1
 
+tabela2 <- tbl_summary(
+  gdh_uls,
+  include = c(uls_2024, adm_tip, sexo, idade_cat_ine, dsp, descricao_apr31),
+  by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
+  missing = "ifany", # Excluir dados ausentes do resumo
+) |>
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
+  add_n() |>  # Adicionar uma coluna para contar observações não ausentes
+  # add_p() |>  # Realizar testes estatísticos para comparar grupos
+  modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
+  bold_labels() # Tornar as etiquetas em negrito para ênfase
+
+tabela2 <- tabela2 |> 
+  as_gt() |>  
+  tab_header(
+    title = md("**Risco por ULS**") ,
+    subtitle = "Por sexo e idade"
+  ) |>
+  tab_source_note(
+    source_note = md("Fonte: gdh")
+  ) |>
+  fmt_number( decimals = 3) |>   
+  opt_stylize(style = 1, color = "gray") |> 
+  opt_align_table_header(align = "left") 
+
+tabela2
+
+
 # Contar total de observações por grupo etário
 contagem_idade <- gdh_uls %>%
   group_by(uls_2024, as.factor(sexo), idade_cat) %>%
