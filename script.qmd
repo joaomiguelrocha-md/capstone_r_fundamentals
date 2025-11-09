@@ -35,7 +35,17 @@ execute:
   message: false
 ---
 
+# Índice
+
+-   ver como fazer
+
 # 1. Introdução (Contexto)
+
+> -\[x\] Explique qual base de dados utilizou e descreva as variáveis empregadas, assim como o objetivo da exploração da base de dados.
+>
+> -   O código de suas análises deve estar visível.
+>
+> -   Utilize pelo menos 3 funcionalidades do módulo 2 (referências, inline coding, adicionar imagem).
 
 O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Science em R**, tem como objetivo aplicar os conhecimentos adquiridos sobre manipulação, exploração, visualização e modelação de dados, utilizando uma base de dados real — a **base modificada de morbilidade hospitalar do SNS (GDH da ACSS)**.
 
@@ -43,19 +53,40 @@ O presente projeto, desenvolvido no âmbito do **Capstone do curso de Data Scien
 
 -   base_gdh_2017_icd10_no_freg
 
--   codigos_residencia
-
 -   codigos_diagnostico_icd10
 
 -   geo_linkage_2024_v6
 
 -   grupos_gdh
 
+-   INE - Populacao 2013 -
+
+## We \<3 chat
+
+O presente projeto integra o Capstone do curso “Fundamentos de Data Science na Saúde: Aplicações com R”, promovido pela Escola Nacional de Saúde Pública. O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
+
+### A ULS
+
+-   imagem
+
+-   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2013 ou 2024)
+
+-   
+
 ------------------------------------------------------------------------
 
-# 2. Objetivos do estudo
+## 1.2. Objetivos do estudo
 
--   pensar na mensagem/historia
+## Objetivo geral
+
+Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistencial entre as Unidades Locais de Saúde (ULS) do Médio Ave e Amadora-Sintra, utilizando dados da base de Grupos de Diagnóstico Homogéneo (GDH) do SNS, com foco na caracterização demográfica, perfil de diagnósticos e desempenho hospitalar. Objetivos específicos
+
+1.  ⁠ ⁠Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo e perfil de morbilidade.
+2.  Identificar e comparar os principais grupos de diagnósticos (GDH) e condições de saúde mais prevalentes em cada região.
+3.  ⁠Avaliar diferenças na resposta hospitalar, considerando:
+    1.  tempos médios de internamento por grupo de diagnóstico;
+    2.  VALE A PENA??? - ocorrência de reinternamentos;
+    3.  limitações de codificação e de qualidade dos dados.
 
 ## 2.1. Objetivo geral
 
@@ -113,7 +144,8 @@ required_packages <- c(
                        "leaflet",
                        "janitor",
                        "assertr",
-                       "data.validator"
+                       "data.validator",
+                       "forcats"
                        )      
 
 for (pkg in required_packages) {
@@ -138,16 +170,22 @@ geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
 
 comm_pt <- st_read("data/map_json_portugal/concelhos_portugal_light.json")
 
+# residentes_2013 <- read_delim("data/populacao_residente_2013.csv", 
+#     delim = ";", 
+#     escape_double = FALSE, 
+#     trim_ws = TRUE)
+
+icd10_codes <- import("data/data_gdh/codigos_diagnostico_icd10.csv")
+
+gdh_group <- import("data/data_gdh/grupos_gdh.csv")
+
+
 ```
 
 ## Limpeza e transformação das variáveis
 
 ```{r }
 
-# 
-gdh_base_clean <- clean_names(gdh_base_raw)
-
-str(gdh_base_clean)
 
 # code_residence <- code_residence |> 
   # clean_names() |> 
@@ -169,15 +207,37 @@ comm_pt <- comm_pt |>
 #     dt_mun = paste0(cod_dist_chr, cod_conc_chr)
 #     )
 
-gdh_base_clean <- gdh_base_clean |> 
+gdh_base_clean <- gdh_base_raw |> 
   rename(
     cod_dist = distrito,
-    cod_conc = concelho
+    cod_conc = concelho,
+    icd10_code = cod_diagnostico
   ) |> 
   mutate(
     across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
-    dt_mun = paste0(cod_dist_chr, cod_conc_chr)
+    dt_mun = paste0(cod_dist_chr, cod_conc_chr),
+    code_length = nchar(icd10_code)
     )
+
+icd10_codes_pt <- icd10_codes |> 
+  clean_names() |>
+  rename(
+    descricao_pt = pt,
+    icd10_code = codigo_icd_10_cm
+  ) |> 
+  select(
+    icd10_code,
+    descricao_pt
+  ) |> 
+  mutate(
+    code_length = nchar(icd10_code)
+  )
+
+# join gdh group and icd10 codes
+gdh_base_join <- gdh_base_clean |> 
+  inner_join(
+    icd10_codes_pt, by = "icd10_code"
+  )
 
 geo_linkage <- geo_linkage |>
   mutate(
@@ -202,11 +262,17 @@ gdh_geo_join <- gdh_base_clean |>
     geo_linkage_target,
     by = "dt_mun") 
 
+# Base de dados apenas com ULS Amadora/Sintra, ULS Médio Ave
 gdh_uls <- gdh_geo_join |> 
   filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
 
 
 
+gdh_group <- gdh_group |> 
+  clean_names() |> 
+  rename(
+    
+  )
 ```
 
 ## Documento erros da base e o que fez para os resolver
@@ -227,6 +293,8 @@ gdh_uls <- gdh_geo_join |>
 
 -   
 
+### Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo
+
 ```{r}
 # valores únicos 
 # hosp_id <- distinct(gdh_base, hosp_id)
@@ -241,6 +309,12 @@ gdh_uls <- gdh_geo_join |>
 #   mutate(
 #     age_group = length(patient_id$seq_number)
 #   )
+
+# Total Episódios por ULS e Tipo de episodio 
+total_ep_uls <- gdh_uls |> 
+  group_by(uls_2024, adm_tip) %>%
+  summarise(total = n()) %>%
+  arrange(uls_2024)
 
 # Criar as categorias (ESP 2013)
 gdh_uls <- gdh_uls |> 
@@ -259,10 +333,22 @@ contagem_idade <- gdh_uls %>%
   summarise(total = n()) %>%
   arrange(idade_cat)
 
+p4 <- total_ep_uls |> 
+  ggplot(aes(x = adm_tip, fill = total)) +  
+  geom_bar() + 
+  facet_wrap(~uls_2024)  # Dividir o gráfico em facetas com base na variável 'tipo_de_especialidade'
 
-# Visualiza o resultado
-print(contagem_idade)
+p4
 
+
+```
+
+```{r}
+# Criar tabela resumo 
+# escolher variaveis - 
+
+
+# Distribuição por sexo ULS 
 p1 <- gdh_uls |> 
   ggplot(aes(x = uls_2024, fill = sexo)) +
   geom_bar() +
@@ -277,7 +363,11 @@ p1 <- gdh_uls |>
     )
 
 p1
+```
 
+### Proporções
+
+```{r}
 # grafico barras por uls e severidade problema - considerar fazer dois separados "dodge" 
 # como fazer aparecer por percentagens? 
 
@@ -299,7 +389,52 @@ p2 <- gdh_uls |>
 # fazer tabela com os missings 
 
 p2
+```
 
+## Perfil de morbilidade
+
+```{r}
+
+
+# total_mort_apr31 <- gdh_uls |>
+#   mutate(
+#     mort_cat = factor(mortalidade_apr31)
+#   ) |> 
+#     group_by(uls_2024, mort_cat) |> 
+#   summarise(total = n(), .groups = "drop")  |> 
+#   arrange(uls_2024)
+
+total_mort_apr31 <- gdh_uls |>
+  mutate(
+    mortalidade_apr31 = na_if(mortalidade_apr31, ""),         # transforma "" em NA
+    mort_cat = fct_explicit_na(factor(mortalidade_apr31), na_level = "NA")
+  ) |>
+  group_by(uls_2024, mort_cat) |>
+  summarise(total = n(), .groups = "drop")
+
+p5 <- total_mort_apr31 |>  
+  ggplot(
+    aes(x = uls_2024, y = total, fill = mort_cat)
+    )+
+  geom_bar(position = "stack", stat = "identity") +
+  scale_fill_viridis_d(end = 0.5) +
+  geom_text(aes(label = total), position = position_stack(vjust = 1), colour = "white") +
+  labs(y = "Total de episódios", x = "ULS", fill = "Severidade")
+
+p5
+
+#   group_by(uls_2024, mort_cat) %>%
+#   summarise(total = n()) #%>%
+# arrange(uls_2024)
+
+# total_mort_apr31 <- gdh_uls |>
+#   mutate(
+#     mort_cat = ifelse(is.na(mortalidade_apr31), "NA", as.character(mortalidade_apr31)),
+#     mort_cat = factor(mort_cat)
+#   ) |>
+  #
+
+# Freq Mortalidade
 p3 <- gdh_uls |> 
   count(uls_2024, mortalidade_apr31) |> 
   mutate(freq = (n / sum(n))) |> 
@@ -308,11 +443,17 @@ p3 <- gdh_uls |>
     aes(x = uls_2024, y = freq, fill = mortalidade_apr31)
     )+
   geom_bar(position = "stack", stat = "identity") +
-  scale_fill_viridis_d(end = .5) +
-  geom_text(aes(label = freq), position = position_stack(vjust = .95), colour = "white") +
+  scale_fill_viridis_d(end = 0.5) +
+  geom_text(aes(label = freq), position = position_stack(vjust = 1), colour = "white") +
   labs(fill = "mortalidade_apr31", y = "Proportion", x = "ULS 2024")
 
 p3
+
+```
+
+concelho/ULS
+
+```{r}
 
 ```
 
