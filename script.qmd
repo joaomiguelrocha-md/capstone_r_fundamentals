@@ -59,6 +59,160 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
 -   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2013 ou 2024)
 
+![](images/clipboard-1099014894.png){width="367"}
+
+Inserir descrição das uls
+
+-   concelhos
+
+-   unidades?
+
+-   densidade populacional .... dados demográficos
+
+```{r}
+
+uls_mave_mun <- c("Santo Tirso", "Trofa", "Vila Nova de Famalicão")
+uls_as_mun <- c("Amadora", "Sintra")
+
+theme_map <- function(...) {
+  theme_minimal() +                    # Começa com o tema minimalista do ggplot2
+  theme(
+    axis.line = element_blank(),       # Remove as linhas dos eixos
+    axis.text.x = element_blank(),     # Remove o texto do eixo X
+    axis.text.y = element_blank(),     # Remove o texto do eixo Y
+    axis.ticks = element_blank(),      # Remove os ticks (marcadores) dos eixos
+    axis.title.x = element_blank(),    # Remove o título do eixo X
+    axis.title.y = element_blank(),    # Remove o título do eixo Y
+    panel.grid.major = element_blank(),# Remove as grades principais do painel
+    panel.grid.minor = element_blank(),# Remove as grades menores do painel
+    panel.border = element_blank(),    # Remove a borda do painel
+  )
+}
+
+gdh_uls_comm <- comm_pt |> 
+  mutate(
+    municipio_2013 = geodsg
+  ) |> 
+  right_join(
+    gdh_uls,
+    by = "municipio_2013"
+  )
+
+uls_map <- ggplot() +
+  geom_sf(data = comm_pt,
+          aes(fill = NAME_1), 
+          size = 0.8,
+          colour = NA,
+          # color = "darkgray",
+          fill = "lightgray"
+          ## fill = "white"
+  ) +
+  geom_sf(data = gdh_uls_comm, 
+          aes(fill = municipio_2013),
+          size = 0.3,
+          color = "black"
+  ) +
+  labs(x = NULL, 
+       y = NULL,
+       legend = NULL,
+       label = "ULS Amadora/Sintra e ULS Médio Ave"
+       # title = "ULS Médio Ave", 
+       # subtitle = "2024", 
+       # caption = "Data: DGS, 2021"
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+ggsave("mapa_uls_junto.png", uls_map) 
+
+ulsmave_map <- ggplot() +
+  geom_sf(data = subset(comm_pt, geodsg %in% uls_mave_mun), 
+          aes(fill = uls_mave_mun), 
+          size = 1.0,
+          colour = "black"
+          # color = "darkgray",
+          ## fill = "white"
+  ) +
+  # geom_sf(data = gdh_uls_comm, 
+  #         aes(fill = municipio_2013),
+  #         size = 0.3,
+  #         color = "black"
+  # ) +
+  labs(x = NULL,
+       y = NULL,
+       legend = NULL,
+       label = "",
+       title = "ULS Médio Ave"
+       # subtitle = "",
+       # caption = ""
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+ulsmave_map
+
+ggsave("mapa_uls_mave.png", ulsmave_map) 
+
+subset(comm_pt, geodsg %in% uls_mave_mun)
+
+uls_as_map <- ggplot() +
+  geom_sf(data = subset(comm_pt, geodsg %in% uls_as_mun), 
+          aes(fill = uls_as_mun), 
+          size = 1.0,
+          colour = "black"
+          # color = "darkgray",
+          ## fill = "white"
+  ) +
+  # geom_sf(data = gdh_uls_comm, 
+  #         aes(fill = municipio_2013),
+  #         size = 0.3,
+  #         color = "black"
+  # ) +
+  labs(x = NULL,
+       y = NULL,
+       legend = NULL,
+       label = "",
+       title = "ULS Amadora Sintra"
+       # subtitle = "",
+       # caption = ""
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+uls_as_map
+
+ggsave("mapa_uls_as.png", uls_as_map)
+
+# ! - Falta: - Dados demográficos
+```
+
 **Bases de dados utilizadas**
 
 -   base_gdh_2017_icd10_no_freg
@@ -114,7 +268,7 @@ O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave
 
         -   
 
-# 3. Importação e preparação dos dados
+# 3. Importação e preparação dos dados (Passar a importação de dados e colocar logo no início) 
 
 ```{r}
 #| warning: false
@@ -172,7 +326,8 @@ remove(pkg)
 ```{r importation and cleaning}
 gdh_base_raw <-  import("data/data_gdh/base_gdh_icd10_no_freg.csv")
 
-code_residence <- import("data/data_gdh/codigos_residencia.csv")
+# code_residence <- import("data/data_gdh/codigos_residencia.csv") 
+# Não foi necessário usar 
 
 geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
 
@@ -201,7 +356,13 @@ df_summarise <- function(df) {
       n_distinct = map_int(df, ~ if (is.character(.x) || is.factor(.x))
                               dplyr::n_distinct(.x, na.rm = TRUE) # especifica package para evitar conflito
                             else NA_integer_),
-    n_NA = map_int(df, ~ sum(is.na(.x)))
+    n_NA = map_int(df, ~ {
+      if (is.character(.x)) {
+        sum(is.na(.x) | .x == "", na.rm = TRUE)  # contar NA e células em branco 
+      } else {
+        sum(is.na(.x))
+      }
+    })
   )
 }
 
@@ -209,6 +370,8 @@ df_summarise <- function(df) {
 ```
 
 ```{r}
+
+# Base dados gdh 
 # checking for NA
 gdh_raw_summary <- df_summarise(gdh_base_raw)
 
@@ -217,7 +380,7 @@ tabela0 <- gdh_raw_summary |>
 
 tabela0
 
-gtsave(tabela0, filename = "tabela_limpeza.html") 
+gtsave(tabela0, filename = "gdh_tabela_limpeza.html") 
 
 gdh_unique <- gdh_base_raw |>
   select(where(is.character)) |> 
@@ -236,15 +399,17 @@ Total observações vs NA
 
     -   sexo: 3ª categoria - "Indeterminado" contabilizar como NA
 
-    -   
+    -   severidade: 225 em branco -\> transformar em "desconhecido"
+
+    -   mortalidade 225 em branco -\>
 
 Erros tipo variaveis
 
--   sexo - 3 variaveis possiveis
-
 -   gcd_apr31 - int devia ser chr)
 
--   freguesia e distrito - estão como int - sao codigos numéricos deve ser chr
+-   concelho e distrito - estão como int - sao codigos numéricos deve ser chr
+
+-   freguesia - remover, sem valores que possamos utilizar
 
 -   
 
@@ -254,15 +419,17 @@ Outros:
 
 -   o que seria expectavel (dicionario) vs obs variaveis
 
-    -   adm_tip
+    -   adm_tip - apenas dois tipos, mas 0 missings
 
-    -   dsp - como tratar falecidos
+    -   dsp - como interpretar? tratar falecidos
+
+    -   
 
 ```         
 seq_number - sem NA 
 hosp_id - 56 possiveis - algum missing? 
 sexo - 3 variaveis como esperado, 
-idade - todas têm entrada
+idade - todas têm entrada - 0 são mesmo idade? se tiver meses? 
 distrito - transformar em chr e contar diferentes (30 valores possiveis)
 concelho - igual a distrito 
 freguesia - inútil - remover 
@@ -276,6 +443,39 @@ tipo_port APR31 - 2 possiveis, 0 NA - bem
 severidade_APR31 - mortalidade_APR31 - 4 valores possiveis existem 5 
 cod_diagnostico - ver se dao todos match com icd10.csv 
 ```
+
+Fazer o mesmo para restantes bases de dados
+
+```{r}
+
+
+icd10_summary <- df_summarise(icd10_codes)
+
+tabela01 <- icd10_summary |> 
+  gt() 
+
+tabela01 
+```
+
+-   todas as variáveis são chr
+
+-   PT: 1180 empty -\> mas descrição em inglês tem valor
+
+```{r}
+
+gdh_group_summary <- df_summarise(gdh_group)
+
+tabela02 <- gdh_group_summary |> 
+  gt() 
+
+tabela02
+
+
+```
+
+-   gcd_apr31 - int em vez de chr - transformar
+
+-   
 
 ## Limpeza e transformação das variáveis
 
@@ -339,15 +539,6 @@ icd10_codes_pt %>%
   count(icd10_code, code_length) %>%
   filter(n > 1)
 
-# join gdh group and icd10 codes
-gdh_base_join <- gdh_base_clean |> 
-  left_join(
-    icd10_codes_pt, by = c("icd10_code", "code_length")
-  ) |> 
-  left_join(
-    gdh_group, by = "gcd_apr31"
-    )
-
 # join grandes grupos (gcd_apr31)
 #verificar duplicados - não há
 gdh_group <- gdh_group |> 
@@ -359,6 +550,17 @@ gdh_group <- gdh_group |>
 gdh_group%>% 
   count(gcd_apr31) %>%
   filter(n > 1)
+
+
+# join gdh group and icd10 codes
+gdh_base_join <- gdh_base_clean |> 
+  left_join(
+    icd10_codes_pt, by = c("icd10_code", "code_length")
+  ) |> 
+  left_join(
+    gdh_group, by = "gcd_apr31"
+    )
+
 
 
 
@@ -404,9 +606,11 @@ gdh_uls <- gdh_join_final |>
 
 ## Documento erros da base e o que fez para os resolver
 
--   Codigos Municipio Base geo_linkage v6 - mais do que uma entrada para codigo dt_mun
+-   Como não existe código para freguesia, foi necessario apagar codigos duplicados para ficar apenas um por concelho. Como queremos apenas concelho para fazer mapas é indiferente qual a freguesia, interessando apenas um código por cada concelho:
 
-    -   Resoluçao: apagar duplicados, manter apenas um codigo por distrito e concelho
+    -   Codigos Municipio Base geo_linkage v6 - mais do que uma entrada para codigo dt_mun
+
+        -   Resoluçao: apagar duplicados, manter apenas um codigo por distrito e concelho
 
 -   
 
@@ -414,7 +618,7 @@ gdh_uls <- gdh_join_final |>
 
 ## Problemas:
 
--   adm_tip - apenas dois tipos presentes na base de dados (urgente e programado)
+-   adm_tip - apenas dois tipos presentes na base de dados (urgente e programado) -\>
 
 -   hora_urgencia, hora_entrada - valores em falta
 
@@ -455,13 +659,56 @@ gdh_uls <- gdh_uls |>
 
 # Total Episódios por ULS e Tipo de episodio 
 total_ep_uls <- gdh_uls |> 
-  group_by(uls_2024, adm_tip) %>%
+  group_by(uls_2024, sexo, idade_cat_eu, adm_tip) %>%
   summarise(total = n()) %>%
   arrange(uls_2024)
 
 # boxplot ?  
 
+p0 <- ggplot(
+  total_ep_uls, 
+  aes(x= idade_cat_eu)
+) +
+  geom_density(alpha=.4) +
+  facet_grid(~uls_2024) +
+  labs(title = "Nº Episodios por grupo etário",
+       subtitle = "ULS Amadora/Sintra e ULS Médio Ave",
+       y = "Densidade",
+       x = "Grupo etário", 
+       caption = "Autores:") +
+  theme_minimal()
 
+p0
+
+
+
+```
+
+```         
+```
+
+```{r}
+
+# Distribuição por sexo ULS 
+p01 <- total_ep_uls |> 
+  ggplot(aes(x = uls_2024, fill = sexo)) +
+  geom_bar() +
+  scale_fill_viridis_d(end = .5) +
+ # facet_grid(~uls_2024) +
+  theme(
+   # axis.text.y = element_blank(),
+    # axis.ticks.y = element_blank(),
+    axis.line.x  = element_blank(),
+    axis.line.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    )
+
+p01
+```
+
+```{r}
+{r}
 # 
 total_uls_sex_age <- gdh_uls |> 
   group_by(uls_2024, adm_tip, sexo = as.factor(sexo), idade_cat_ine) %>%
@@ -526,9 +773,9 @@ tabela2
 
 # Contar total de observações por grupo etário
 contagem_idade <- gdh_uls %>%
-  group_by(uls_2024, as.factor(sexo), idade_cat) %>%
+  group_by(uls_2024, as.factor(sexo), idade_cat_ine) %>%
   summarise(total = n()) %>%
-  arrange(idade_cat)
+  arrange(idade_cat_ine)
 
 p4 <- total_ep_uls |> 
   ggplot(aes(x = adm_tip, fill = total)) +  
@@ -536,30 +783,6 @@ p4 <- total_ep_uls |>
   facet_wrap(~uls_2024)  # Dividir o gráfico em facetas com base na variável 'tipo_de_especialidade'
 
 p4
-
-
-```
-
-```{r}
-# Criar tabela resumo 
-# escolher variaveis - 
-
-
-# Distribuição por sexo ULS 
-p1 <- gdh_uls |> 
-  ggplot(aes(x = uls_2024, fill = sexo)) +
-  geom_bar() +
-  scale_fill_viridis_d(end = .5) +
-  theme(
-   # axis.text.y = element_blank(),
-    # axis.ticks.y = element_blank(),
-    axis.line.x  = element_blank(),
-    axis.line.y = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    )
-
-p1
 ```
 
 ### Proporções
