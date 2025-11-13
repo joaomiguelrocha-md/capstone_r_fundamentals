@@ -49,8 +49,7 @@ execute:
 
 O presente projeto foi desenvolvido no âmbito do **Capstone** do curso [**Fundamentos de Data Science na Saúde: Aplicações com R**](https://www.ensp.unl.pt/curso/fundamentos-de-data-science-na-saude-aplicacoes-com-r/) da [**Escola Nacional de Saúde Pública**](https://www.ensp.unl.pt/) [@ENSP_FundamentosDataScience2025].
 
-![](images/RStudio_logo_flat.svg.png){width="295"} 
-Fonte: [@RStudioLogo]
+![](images/RStudio_logo_flat.svg.png){width="295"} Fonte: [@RStudioLogo]
 
 O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
 
@@ -152,7 +151,9 @@ required_packages <- c(
                        "glm2",
                        "performance",
                        "see",
-                       "readxl"
+                       "readxl",
+                       "purrr",
+                       "tibble"
                        )      
 
 for (pkg in required_packages) {
@@ -190,9 +191,97 @@ gdh_group <- import("data/data_gdh/grupos_gdh.csv")
 
 ```
 
+```{r}
+
+df_summarise <- function(df) {
+    tibble(
+      variable = names(df),
+      type = map_chr(df, ~ class(.x)[1]),
+      n_total = nrow(df),
+      n_distinct = map_int(df, ~ if (is.character(.x) || is.factor(.x))
+                              dplyr::n_distinct(.x, na.rm = TRUE) # especifica package para evitar conflito
+                            else NA_integer_),
+    n_NA = map_int(df, ~ sum(is.na(.x)))
+  )
+}
+
+
+```
+
+```{r}
+# checking for NA
+gdh_raw_summary <- df_summarise(gdh_base_raw)
+
+tabela0 <- gdh_raw_summary |> 
+  gt()
+
+tabela0
+
+gtsave(tabela0, filename = "tabela_limpeza.html") 
+
+gdh_unique <- gdh_base_raw |>
+  select(where(is.character)) |> 
+  map(unique)
+```
+
+Avaliação inicial
+
+Total observações vs NA
+
+-   n = 1711879
+
+-   NA
+
+    -   hora_urgencia: n(1.327.998)
+
+    -   sexo: 3ª categoria - "Indeterminado" contabilizar como NA
+
+    -   
+
+Erros tipo variaveis
+
+-   sexo - 3 variaveis possiveis
+
+-   gcd_apr31 - int devia ser chr)
+
+-   freguesia e distrito - estão como int - sao codigos numéricos deve ser chr
+
+-   
+
+Outros:
+
+-   dias internamento - como interpretar? remover 0?
+
+-   o que seria expectavel (dicionario) vs obs variaveis
+
+    -   adm_tip
+
+    -   dsp - como tratar falecidos
+
+```         
+seq_number - sem NA 
+hosp_id - 56 possiveis - algum missing? 
+sexo - 3 variaveis como esperado, 
+idade - todas têm entrada
+distrito - transformar em chr e contar diferentes (30 valores possiveis)
+concelho - igual a distrito 
+freguesia - inútil - remover 
+hora_entrada - valores em s, a partir das 0h do dia da entrada na instituição - verificar 0 e como interpretar  
+dias_int - Total de dias de estadia do utente na instituição de saúde, em conformidade com a definição estatística de tempo de internamento, constante na portaria em vigor à data de extração dos dados.- qual a definicao estatistica? 
+dsp - 9 valores possiveis, 9 entradas , contar "Desconhecido" como NA 
+adm_tip - 8 valores possiveis, apenas 2 
+hora_urgência - Hora de entrada no serviço de urgência da instituição de saúde. Os valores são apresentados em segundos, contados a partir das zero horas do dia em que o utente deu entrada, no serviço de urgência da instituição - 
+gcd_APR31 - mudar para chr, 27 valores possiveis, 99 - Erro
+tipo_port APR31 - 2 possiveis, 0 NA - bem 
+severidade_APR31 - mortalidade_APR31 - 4 valores possiveis existem 5 
+cod_diagnostico - ver se dao todos match com icd10.csv 
+```
+
 ## Limpeza e transformação das variáveis
 
 ```{r }
+
+
 
 
 # code_residence <- code_residence |> 
