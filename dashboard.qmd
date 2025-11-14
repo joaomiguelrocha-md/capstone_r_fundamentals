@@ -1,20 +1,12 @@
 ---
-title: "dashboard"
-format: html
-editor: visual
+title: "Capstone Dashboard"
+format: 
+  dashboard:
+    scrolling: true 
+logo: images/ensp.png
+fig-width: 10
 ---
 
-## Dashboard
+## Linha {height = 70%}
 
-## Running Code
-
-```{r}
-1 + 1
-```
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+## Linha 2 {width = 30%}

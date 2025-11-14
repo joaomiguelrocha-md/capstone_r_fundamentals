@@ -697,7 +697,71 @@ p01
 
 ```
 
-```         
+```{r}
+
+p4_0 <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf))
+  ) |> 
+  ggplot() +
+  geom_bar(
+    aes(x = uls_2024, fill = idade_cat),
+    position = "fill"
+  ) +
+  geom_text(
+    aes(x = uls_2024, fill = idade_cat, label = after_stat(count)),
+    stat = "count",
+    position = position_fill(vjust = 0.5)
+  ) +
+  theme_classic() 
+  
+
+p4_0
+
+p4_1 <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    ) |> 
+  count(uls_2024, idade_cat) |> 
+  mutate(
+    prop_total = n/sum(n)
+  ) |> 
+  ggplot() +
+  geom_col(
+    aes(x = uls_2024, y = prop_total, fill = idade_cat),
+    # position = "fill"
+  ) +
+  geom_text(
+    aes(y = prop_total, fill = idade_cat,
+    label = percent(prop_total, accuracy = 1.0)
+    ),
+    stat = "count",# mostrar %
+    position = position_fill(vjust = 0.1)  
+  ) +
+  theme_classic() 
+  
+
+p4_1
+
+p4_2 <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf))
+  ) |> 
+  ggplot() +
+  geom_bar(
+    aes(x = uls_2024, fill = idade_cat),
+    position = "fill"
+  ) +
+  geom_text(
+    stat = "count",
+    aes(label = after_stat(prop)),
+    position = position_fill(vjust = 0.5)
+  ) +
+  theme_classic() 
+  
+
+p4_1
+
 ```
 
 ```{r}
