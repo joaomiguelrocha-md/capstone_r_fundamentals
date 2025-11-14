@@ -57,9 +57,13 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
 -   imagem
 
--   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2013 ou 2024)
+-   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2017)
 
-![](images/clipboard-1099014894.png){width="367"}
++---------------+--------+---------+
+| links imagens | uls as | ulsmave |
+|               |        |         |
+| uls           |        |         |
++---------------+--------+---------+
 
 Inserir descrição das uls
 
@@ -211,6 +215,7 @@ uls_as_map
 ggsave("mapa_uls_as.png", uls_as_map)
 
 # ! - Falta: - Dados demográficos
+## uls com distrito, concelhos e area ars
 ```
 
 **Bases de dados utilizadas**
@@ -616,14 +621,6 @@ gdh_uls <- gdh_join_final |>
 
 # 4. Análise exploratória dos dados
 
-## Problemas:
-
--   adm_tip - apenas dois tipos presentes na base de dados (urgente e programado) -\>
-
--   hora_urgencia, hora_entrada - valores em falta
-
--   
-
 ### Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo
 
 ```{r}
@@ -680,6 +677,22 @@ p0 <- ggplot(
 
 p0
 
+p01 <- ggplot() +
+  geom_area(
+    gdh_uls,
+    aes(y = ),
+    alpha= 0.4,
+    colour = "black",
+    stat = "bin") +
+  # facet_grid(~uls_2024) +
+  labs(title = "Nº Episodios por grupo etário",
+       subtitle = "ULS Amadora/Sintra e ULS Médio Ave",
+       y = "Densidade",
+       x = "Grupo etário", 
+       caption = "Autores:") +
+  theme_minimal()
+
+p01
 
 
 ```
@@ -690,7 +703,7 @@ p0
 ```{r}
 
 # Distribuição por sexo ULS 
-p01 <- total_ep_uls |> 
+p03 <- total_ep_uls |> 
   ggplot(aes(x = uls_2024, fill = sexo)) +
   geom_bar() +
   scale_fill_viridis_d(end = .5) +
@@ -704,7 +717,7 @@ p01 <- total_ep_uls |>
     axis.title.y = element_blank(),
     )
 
-p01
+p0
 ```
 
 ```{r}
@@ -719,10 +732,10 @@ total_uls_sex_age <- gdh_uls |>
 tabela1 <- tbl_summary(
   gdh_uls,
   include = c(uls_2024, adm_tip, sexo, idade_cat_ine),
-  by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
+  by = sexo, # Dividir a tabela pelo estado da doença cardíaca
   missing = "ifany", # Excluir dados ausentes do resumo
 ) |>
-  modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
+  modify_spanning_header(c("stat_1", "stat_2") ~ "**Sexo**") %>%
   add_n() |>  # Adicionar uma coluna para contar observações não ausentes
   # add_p() |>  # Realizar testes estatísticos para comparar grupos
   modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
@@ -731,8 +744,8 @@ tabela1 <- tbl_summary(
 tabela1 <- tabela1 |> 
   as_gt() |>  
   tab_header(
-    title = md("**Risco por ULS**") ,
-    subtitle = "Por sexo e idade"
+    title = md("**Episódios por ULS**") ,
+    subtitle = "Por sexo"
   ) |>
   tab_source_note(
     source_note = md("Fonte: gdh")
@@ -868,12 +881,6 @@ p3 <- gdh_uls |>
   labs(fill = "mortalidade_apr31", y = "Proportion", x = "ULS 2024")
 
 p3
-
-```
-
-concelho/ULS
-
-```{r}
 
 ```
 

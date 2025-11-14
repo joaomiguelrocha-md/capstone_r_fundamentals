@@ -1,0 +1,20 @@
+---
+title: "dashboard"
+format: html
+editor: visual
+---
+
+## Dashboard
+
+## Running Code
+
+```{r}
+1 + 1
+```
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
