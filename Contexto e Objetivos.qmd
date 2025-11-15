@@ -4,6 +4,12 @@ format: html
 editor: visual
 ---
 
+::: callout-note
+-   [ ] variáveis  - colocar definições do dicionário?
+
+-   [ ] 
+:::
+
 # 1. Introdução (Contexto)
 
 > -\[x\] Explique qual base de dados utilizou e descreva as variáveis empregadas, assim como o objetivo da exploração da base de dados.

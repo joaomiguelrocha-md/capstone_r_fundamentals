@@ -12,6 +12,40 @@ Tarefas
     -   [ ] Idade - (-1) ?
 
 -   [ ] Verificar joins
+
+-   [ ] Variabilidade/distribuição
+
+    -   [ ] valores típicos
+
+    -   [ ] outliers
+
+-   [ ] variavéis
+
+    -   [ ] idade
+
+    -   [ ] sexo
+
+    -   [ ] tempo de internamento
+
+    -   [ ] tipo adm
+
+    -   [ ] destino alta
+
+    -   [ ] códigos/diagnósticos + freq (top 5)
+
+<!-- -->
+
+-   [ ] covariation
+
+    -   [ ] Idade e sexo
+
+    -   [ ] idade tempo internamento
+
+    -   [ ] sexo e tempo internamento
+
+    -   [ ] outras? concelho/uls?
+
+**Covariation** is the tendency for the values of two or more variables to vary together in a related way. The best way to spot covariation is to visualize the relationship between two or more variables.
 :::
 
 ------------------------------------------------------------------------
@@ -418,7 +452,187 @@ gdh_uls <- gdh_join_final |>
 
 # 4. Análise exploratória dos dados
 
-### Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo
+```{r}
+# Funções 
+## Mudar para português
+
+var_summarise <- summarise_variable <- function(x) {
+  if (is.numeric(x)) {
+    out <- list(
+      Min = min(x, na.rm = TRUE),
+      Max = max(x, na.rm = TRUE),
+      Mean = mean(x, na.rm = TRUE),
+      Median = median(x, na.rm = TRUE),
+      Quantiles = quantile(x, na.rm = TRUE),
+      Total = sum(x, na.rm = TRUE),
+      NAs = sum(is.na(x))
+    )
+  } else if (is.character(x) || is.factor(x)) {
+    tbl <- table(x, useNA = "ifany")
+    freq <- as.numeric(tbl)
+    prop <- as.numeric(prop.table(tbl))
+    cum_freq <- cumsum(freq)
+    names(freq) <- names(prop) <- names(tbl)
+    out <- list(
+      Unique_Values = unique(na.omit(x)),
+      Frequency = freq,
+      Proportion = prop,
+      CumFreq = cum_freq,
+      NAs = sum(is.na(x))
+    )
+  } else {
+    out <- list(Warning = "Variable type not supported")
+  }
+  return(out)
+}
+
+var_summarise_df <- function(df, x) {
+  # Extract the variable vector from df using x as column name (string)
+  var <- df[[x]]
+  
+  if (is.numeric(var)) {
+    df_out <- data.frame(
+      Statistic = c("Min", "Max", "Mean", "Median", "Total", "NAs"),
+      Value = c(
+        min(var, na.rm = TRUE),
+        max(var, na.rm = TRUE),
+        mean(var, na.rm = TRUE),
+        median(var, na.rm = TRUE),
+        sum(var, na.rm = TRUE),
+        sum(is.na(var))
+      )
+    )
+    # Add quantiles as separate rows
+    quants <- quantile(var, na.rm = TRUE)
+    quant_df <- data.frame(
+      Statistic = paste0("Quantile_", names(quants)),
+      Value = as.numeric(quants)
+    )
+    df_out <- rbind(df_out, quant_df)
+  } else if (is.character(var) || is.factor(var)) {
+    tbl <- table(var, useNA = "ifany")
+    freq <- as.numeric(tbl)
+    prop <- prop.table(tbl)
+    cum_freq <- cumsum(freq)
+    df_out <- data.frame(
+      Value = names(tbl),
+      Frequency = freq,
+      Proportion = prop,
+      CumFrequency = cum_freq
+    )
+  } else {
+    df_out <- data.frame(Warning = "Variable type not supported")
+  }
+  
+  return(df_out)
+}
+```
+
+Idade
+
+```{r}
+# variabilidade 
+
+idade_sumario <- var_summarise_df(gdh_base_clean, "idade")
+
+# Base dados completa
+p4_0 <- gdh_base_clean |>
+  ggplot() +
+  geom_boxplot(
+    aes(y = idade)
+    ) +
+  # facet_grid(~sexo) +
+  theme_minimal() +
+  theme(
+    axis.line.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+  
+p4
+
+idade_sumario <- idade_sumario |> 
+  mutate(
+    value = round(Value, 0)
+  ) |> 
+  filter(
+    Statistic != "Total"
+  )
+
+# add labels - ver como corrigir 
+p4_01 <- gdh_base_clean |>
+  ggplot() +
+  geom_boxplot(
+    aes(x = 1, y = idade)
+    ) +
+  geom_text(
+    data = idade_sumario, 
+    aes(x = 1, y = value, label = value),
+    hjust = -0.3,
+    vjust = -0.3
+    ) +  
+  theme_minimal() +
+  theme(
+    axis.line.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+  
+p4_01
+
+
+# ULS MAve e ULS A/S
+
+
+p4_02 <- gdh_base_clean |>
+  filter(
+    uls_2024
+  ) |> 
+  ggplot() +
+  geom_density(
+    aes(x = idade)
+    ) +
+  facet_grid(~sexo) +
+  theme_minimal() 
+  # theme(
+  #   axis.line.x = element_blank(),
+  #   axis.text.x = element_blank()
+  # )
+  
+p4_02
+
+
+```
+
+Sexo
+
+```{r}
+
+sexo_sumario <- var_summarise_df(gdh_base_clean, "sexo")
+
+# Base dados completa
+p4_1 <- gdh_base_clean |>
+  filter(
+    sexo != "Indeterminado"
+  ) |> 
+  ggplot() +
+  geom_boxplot(
+    aes(y = idade, fill = sexo)
+    ) +
+  theme_classic() +
+  theme(
+    axis.line.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+  
+p4_1
+
+# Ficava mais bonito ribbon 
+```
+
+### Caracterizar a população residente nas áreas correspondentes às duas ULS
+
+### idade
+
+### 
 
 ```{r}
 # valores únicos 
@@ -590,6 +804,8 @@ p4_2 <- gdh_uls |>
 p4_2
 
 ```
+
+### sexo
 
 ```{r}
 
