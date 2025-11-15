@@ -273,7 +273,7 @@ O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave
 
         -   
 
-# 3. Importação e preparação dos dados (Passar a importação de dados e colocar logo no início) 
+# 3. Importação e preparação dos dados (Passar a importação de dados e colocar logo no início)
 
 ```{r}
 #| warning: false
@@ -390,6 +390,55 @@ gtsave(tabela0, filename = "gdh_tabela_limpeza.html")
 gdh_unique <- gdh_base_raw |>
   select(where(is.character)) |> 
   map(unique)
+
+gdh_base_raw |> 
+  count(
+    `tipo_port APR31` == "Amb"
+    )
+
+gdh_base_raw |> 
+  count(
+    `tipo_port APR31` == "Int",
+    dias_int == 0 
+    ) 
+  
+total_icd10 <- gdh_join_final |> 
+  group_by(icd10_code) |> 
+  summarise(total = n()) |>
+  arrange(desc(total)) |> 
+  right_join(
+    icd10_codes_pt,
+    by = "icd10_code"
+  )
+
+total_icd10 <- gdh_join_final |> 
+  group_by(uls_2024, dt_mun, icd10_code) |> 
+  summarise(total = n()) |>
+  arrange(desc(total)) |> 
+  left_join(
+    icd10_codes_pt,
+    by = "icd10_code"
+  )
+
+total_icd10_uls <- gdh_join_final |> 
+  group_by(icd10_code, tipo_port_apr31, uls_2024) %>%
+  summarise(total = n()) %>%
+  arrange(desc(total)) 
+
+
+gdh |>
+  count(
+    tipo_port_apr31 == "Amb",
+    icd10_code == "Z5111"
+  )
+  
+
+gdh_join_final_sum <- df_summarise(gdh_join_final)
+
+tabela500 <- gdh_join_final_sum |> 
+  gt()
+
+tabela500
 ```
 
 Avaliação inicial
@@ -400,7 +449,7 @@ Total observações vs NA
 
 -   NA
 
-    -   hora_urgencia: n(1.327.998)
+    -   hora_urgencia: n(1.327.998) -
 
     -   sexo: 3ª categoria - "Indeterminado" contabilizar como NA
 
@@ -410,7 +459,7 @@ Total observações vs NA
 
 Erros tipo variaveis
 
--   gcd_apr31 - int devia ser chr)
+-   gcd_apr31 - int devia ser chr
 
 -   concelho e distrito - estão como int - sao codigos numéricos deve ser chr
 
@@ -445,7 +494,7 @@ adm_tip - 8 valores possiveis, apenas 2
 hora_urgência - Hora de entrada no serviço de urgência da instituição de saúde. Os valores são apresentados em segundos, contados a partir das zero horas do dia em que o utente deu entrada, no serviço de urgência da instituição - 
 gcd_APR31 - mudar para chr, 27 valores possiveis, 99 - Erro
 tipo_port APR31 - 2 possiveis, 0 NA - bem 
-severidade_APR31 - mortalidade_APR31 - 4 valores possiveis existem 5 
+severidade_APR31 - mortalidade_APR31 - 4 valores possiveis existem 5 - 225 NA são todos missing
 cod_diagnostico - ver se dao todos match com icd10.csv 
 ```
 
@@ -476,6 +525,13 @@ tabela02 <- gdh_group_summary |>
 tabela02
 
 
+
+gdh_group_summary <- df_summarise(gdh_group)
+
+tabela02 <- gdh_group_summary |> 
+  gt() 
+
+tabela02
 ```
 
 -   gcd_apr31 - int em vez de chr - transformar
@@ -662,7 +718,7 @@ total_ep_uls <- gdh_uls |>
 
 # boxplot ?  
 
-p0 <- ggplot(
+p10 <- ggplot(
   total_ep_uls, 
   aes(x= idade_cat_eu)
 ) +
@@ -675,9 +731,9 @@ p0 <- ggplot(
        caption = "Autores:") +
   theme_minimal()
 
-p0
+p10
 
-p01 <- ggplot() +
+p11 <- ggplot() +
   geom_area(
     gdh_uls,
     aes(y = ),
@@ -709,39 +765,69 @@ p4_0 <- gdh_uls |>
     position = "fill"
   ) +
   geom_text(
-    aes(x = uls_2024, fill = idade_cat, label = after_stat(count)),
+    aes(
+      x = uls_2024, 
+      fill = idade_cat, 
+      label = after_stat(count)
+      ),
     stat = "count",
     position = position_fill(vjust = 0.5)
-  ) +
+    ) +
+    theme(
+    legend.title = element_blank(),
+    legend.position = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+    ) +
+  coord_flip() +
   theme_classic() 
-  
+
 
 p4_0
 
 p4_1 <- gdh_uls |> 
   mutate(
     idade_cat = cut(idade, c(0, 18, 65, Inf))
-    ) |> 
-  count(uls_2024, idade_cat) |> 
-  mutate(
-    prop_total = n/sum(n)
-  ) |> 
+  ) |>
   ggplot() +
-  geom_col(
-    aes(x = uls_2024, y = prop_total, fill = idade_cat),
-    # position = "fill"
+  geom_bar(
+    aes(x = uls_2024, fill = idade_cat),
+    position = "stack"
   ) +
   geom_text(
-    aes(y = prop_total, fill = idade_cat,
-    label = percent(prop_total, accuracy = 1.0)
-    ),
-    stat = "count",# mostrar %
-    position = position_fill(vjust = 0.1)  
+    aes(x = uls_2024, fill = idade_cat, label = after_stat(count)),
+    stat = "count",
+    position = position_stack(vjust = 0.5)
   ) +
   theme_classic() 
   
 
 p4_1
+
+p4_2 <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    ) |>
+  count(uls_2024, idade_cat) |> 
+  mutate(
+    prop_total = n/sum(n)
+  ) |> 
+  ggplot() +
+  geom_bar(
+    aes(x = uls_2024, y = prop_total, fill = idade_cat),
+    position = "fill"
+  ) +
+  geom_text(
+    aes(x = prop_total, fill = idade_cat,
+    label = percent(prop_total, accuracy = 1.0)
+    ),
+    stat = "count",# mostrar %
+    position = position_fill(vjust = 0.5)  
+  ) +
+  theme_classic() 
+  
+
+p4_2
 
 p4_2 <- gdh_uls |> 
   mutate(
@@ -754,13 +840,13 @@ p4_2 <- gdh_uls |>
   ) +
   geom_text(
     stat = "count",
-    aes(label = after_stat(prop)),
+    aes(label = c(after_stat(prop), "(n)")),
     position = position_fill(vjust = 0.5)
   ) +
-  theme_classic() 
-  
+  theme_classic() +
 
-p4_1
+
+p4_2
 
 ```
 
@@ -781,7 +867,7 @@ p03 <- total_ep_uls |>
     axis.title.y = element_blank(),
     )
 
-p0
+p03
 ```
 
 ```{r}
@@ -855,9 +941,17 @@ contagem_idade <- gdh_uls %>%
   arrange(idade_cat_ine)
 
 p4 <- total_ep_uls |> 
-  ggplot(aes(x = adm_tip, fill = total)) +  
-  geom_bar() + 
-  facet_wrap(~uls_2024)  # Dividir o gráfico em facetas com base na variável 'tipo_de_especialidade'
+  ggplot() +  
+  geom_bar(aes(x = adm_tip, y = total, fill = sexo), 
+           stat = "identity") + 
+  geom_text(
+    aes(x = adm_tip, fill = sexo)
+    label = "total",
+    stat = "identity",
+    position = position_stack(vjust = 0.5)
+  ) +
+  facet_wrap(~uls_2024) +  # Dividir o gráfico em facetas com base na variável 'tipo_de_especialidade'
+  theme_classic()
 
 p4
 ```
@@ -877,7 +971,7 @@ p2 <- gdh_uls |>
     )+
   geom_bar(position = "stack", stat = "identity") +
   scale_fill_viridis_d(end = .5) +
-  geom_text(aes(label = freq), position = position_stack(vjust = .95), colour = "white") +
+  geom_text(aes(label = percent(freq, accuracy = .1)), position = position_stack(vjust = .1), colour = "white") +
   labs(fill = "severidade_apr31", y = "Proportion", x = "ULS 2024")
 
 # low hanging fruit: residentes municipio (INE) 2017 - 
@@ -886,6 +980,9 @@ p2 <- gdh_uls |>
 # fazer tabela com os missings 
 
 p2
+
+
+## !!! transformar em função  
 ```
 
 ## Perfil de morbilidade

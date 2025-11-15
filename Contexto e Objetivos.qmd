@@ -1,0 +1,235 @@
+---
+title: "Contexto e Objetivos"
+format: html
+editor: visual
+---
+
+# 1. Introdução (Contexto)
+
+> -\[x\] Explique qual base de dados utilizou e descreva as variáveis empregadas, assim como o objetivo da exploração da base de dados.
+>
+> -   O código de suas análises deve estar visível.
+>
+> -   Utilize pelo menos 3 funcionalidades do módulo 2 (referências, inline coding, adicionar imagem).
+
+O presente projeto foi desenvolvido no âmbito do **Capstone** do curso [**Fundamentos de Data Science na Saúde: Aplicações com R**](https://www.ensp.unl.pt/curso/fundamentos-de-data-science-na-saude-aplicacoes-com-r/) da [**Escola Nacional de Saúde Pública**](https://www.ensp.unl.pt/) [@ENSP_FundamentosDataScience2025].
+
+![](images/RStudio_logo_flat.svg.png){width="295"} Fonte: [@RStudioLogo]
+
+O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
+
+### A ULS
+
+-   imagem
+
+-   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2017)
+
++-----------------------+-----------------------+-----------------------+
+| links imagens         | uls as                | ulsmave               |
+|                       |                       |                       |
+| uls                   |                       |                       |
++-----------------------+-----------------------+-----------------------+
+
+Inserir descrição das uls
+
+-   concelhos
+
+-   unidades?
+
+-   densidade populacional .... dados demográficos
+
+```{r}
+
+uls_mave_mun <- c("Santo Tirso", "Trofa", "Vila Nova de Famalicão")
+uls_as_mun <- c("Amadora", "Sintra")
+
+theme_map <- function(...) {
+  theme_minimal() +                    # Começa com o tema minimalista do ggplot2
+  theme(
+    axis.line = element_blank(),       # Remove as linhas dos eixos
+    axis.text.x = element_blank(),     # Remove o texto do eixo X
+    axis.text.y = element_blank(),     # Remove o texto do eixo Y
+    axis.ticks = element_blank(),      # Remove os ticks (marcadores) dos eixos
+    axis.title.x = element_blank(),    # Remove o título do eixo X
+    axis.title.y = element_blank(),    # Remove o título do eixo Y
+    panel.grid.major = element_blank(),# Remove as grades principais do painel
+    panel.grid.minor = element_blank(),# Remove as grades menores do painel
+    panel.border = element_blank(),    # Remove a borda do painel
+  )
+}
+
+gdh_uls_comm <- comm_pt |> 
+  mutate(
+    municipio_2013 = geodsg
+  ) |> 
+  right_join(
+    gdh_uls,
+    by = "municipio_2013"
+  )
+
+uls_map <- ggplot() +
+  geom_sf(data = comm_pt,
+          aes(fill = NAME_1), 
+          size = 0.8,
+          colour = NA,
+          # color = "darkgray",
+          fill = "lightgray"
+          ## fill = "white"
+  ) +
+  geom_sf(data = gdh_uls_comm, 
+          aes(fill = municipio_2013),
+          size = 0.3,
+          color = "black"
+  ) +
+  labs(x = NULL, 
+       y = NULL,
+       legend = NULL,
+       label = "ULS Amadora/Sintra e ULS Médio Ave"
+       # title = "ULS Médio Ave", 
+       # subtitle = "2024", 
+       # caption = "Data: DGS, 2021"
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+ggsave("mapa_uls_junto.png", uls_map) 
+
+ulsmave_map <- ggplot() +
+  geom_sf(data = subset(comm_pt, geodsg %in% uls_mave_mun), 
+          aes(fill = uls_mave_mun), 
+          size = 1.0,
+          colour = "black"
+          # color = "darkgray",
+          ## fill = "white"
+  ) +
+  # geom_sf(data = gdh_uls_comm, 
+  #         aes(fill = municipio_2013),
+  #         size = 0.3,
+  #         color = "black"
+  # ) +
+  labs(x = NULL,
+       y = NULL,
+       legend = NULL,
+       label = "",
+       title = "ULS Médio Ave"
+       # subtitle = "",
+       # caption = ""
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+ulsmave_map
+
+ggsave("mapa_uls_mave.png", ulsmave_map) 
+
+subset(comm_pt, geodsg %in% uls_mave_mun)
+
+uls_as_map <- ggplot() +
+  geom_sf(data = subset(comm_pt, geodsg %in% uls_as_mun), 
+          aes(fill = uls_as_mun), 
+          size = 1.0,
+          colour = "black"
+          # color = "darkgray",
+          ## fill = "white"
+  ) +
+  # geom_sf(data = gdh_uls_comm, 
+  #         aes(fill = municipio_2013),
+  #         size = 0.3,
+  #         color = "black"
+  # ) +
+  labs(x = NULL,
+       y = NULL,
+       legend = NULL,
+       label = "",
+       title = "ULS Amadora Sintra"
+       # subtitle = "",
+       # caption = ""
+       ) +
+  #scale_fill_discrete(name = "Concelhos") +
+  coord_sf() +
+  # Ajustar a posição e estilo da legenda
+  theme_map() +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "none",
+    # legend.position = "right",
+    # legend.direction = "vertical",
+    legend.text = element_blank() # element_text(size = 8, colour = "gray50")
+  )
+
+uls_as_map
+
+ggsave("mapa_uls_as.png", uls_as_map)
+
+# ! - Falta: - Dados demográficos
+## uls com distrito, concelhos e area ars
+```
+
+**Bases de dados utilizadas**
+
+-   base_gdh_2017_icd10_no_freg
+
+-   codigos_diagnostico_icd10
+
+-   geo_linkage_2024_v6
+
+-   grupos_gdh
+
+-   INE - Populacao 2017 -
+
+------------------------------------------------------------------------
+
+## 1.2. Objetivos do estudo
+
+## Objetivo geral
+
+Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistencial entre as Unidades Locais de Saúde (ULS) do Médio Ave e Amadora-Sintra, utilizando dados da base de Grupos de Diagnóstico Homogéneo (GDH) do SNS, com foco na caracterização demográfica, perfil de diagnósticos e desempenho hospitalar. Objetivos específicos
+
+1.  ⁠ ⁠Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo e perfil de morbilidade.
+2.  Identificar e comparar os principais grupos de diagnósticos (GDH) e condições de saúde mais prevalentes em cada região.
+3.  ⁠Avaliar diferenças na resposta hospitalar, considerando:
+    1.  tempos médios de internamento por grupo de diagnóstico;
+    2.  VALE A PENA??? - ocorrência de reinternamentos;
+    3.  limitações de codificação e de qualidade dos dados.
+
+## 2.1. Objetivo geral
+
+O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave e Amadora-Sintra.
+
+## 2.2. Objetivos específicos
+
+-   Caracterizar a população residente nos concelhos correspondentes às áreas das ULS
+
+    -   distribuição idades, sexo
+
+    -   problemas de saúde (total por nível de risco mortalidade e severidade)
+
+-   Caracterizar os problemas de saúde e identificar os mais prevalentes
+
+    -   comparar totais, áreas,
+
+-   Comparar resposta por hospital
+
+    -   tempos de internamento para problemas semelhantes (mesma codificaçao)
+
+        -   decidir se por gcd ou gcd + icd10 - questão codificação está efetivamente correta???
+
+        -   reinternamentos (episodio - alta - episodio - calcular tempo entre episodios ou entre alta e novo episodio) - discutir limitações
