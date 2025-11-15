@@ -89,7 +89,8 @@ required_packages <- c(
                        "see",
                        "readxl",
                        "purrr",
-                       "tibble"
+                       "tibble",
+                       "ggridges"
                        )      
 
 for (pkg in required_packages) {
@@ -108,7 +109,7 @@ remove(pkg)
 ```{r importation and cleaning}
 gdh_base_raw <-  import("data/data_gdh/base_gdh_icd10_no_freg.csv")
 
-# code_residence <- import("data/data_gdh/codigos_residencia.csv") 
+code_residence <- import("data/data_gdh/codigos_residencia.csv") 
 # Não foi necessário usar 
 
 geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
@@ -334,11 +335,12 @@ comm_pt <- comm_pt |>
 
 
 # preparar base dados code_residence e  para join 
-# code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
-#   mutate(
-#     across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
-#     dt_mun = paste0(cod_dist_chr, cod_conc_chr)
-#     )
+code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
+  clean_names() |> 
+  mutate(
+    across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
+    dt_mun = paste0(cod_dist_chr, cod_conc_chr)
+    )
 
 gdh_base_clean <- gdh_base_raw |> 
   clean_names() |> 
@@ -352,6 +354,12 @@ gdh_base_clean <- gdh_base_raw |>
     dt_mun = paste0(cod_dist_chr, cod_conc_chr),
     code_length = nchar(icd10_code)
     )
+
+gdh_base_join <- gdh_base_clean |> 
+  left_join(
+    code_residence,
+    by = "dt_mun"
+  )
 
 icd10_codes_pt <- icd10_codes |> 
   clean_names() |>
@@ -405,13 +413,15 @@ gdh_base_join <- gdh_base_clean |>
 
 geo_linkage <- geo_linkage |>
   mutate(
-    dt_mun = str_pad(as.character(dt_mun), 4, pad = 0)
-         )
+    dt_mun = str_pad(as.character(dt_mun), 4, pad = 0),
+    mun_cod = str_pad(as.character(municipio_2013_cod), 2, pad = 0),
+    dt_cod = str_pad(as.character(distrito_2013_cod), 2, pad = 0)
+    )
   
 
 geolink_target <- c("dt_mun", "distrito_2013", "municipio_2013", "uls_2024", "regiao_2024", "nuts3_2013", "nuts3_2013_cod", "nuts3_2024", "nuts3_2024_cod", "municipio_2024_cod", "uls_2023", "uls_hierarquia_csp")
 
-geo_linkage_clean <- geo_linkage |> 
+geo_linkage_join <- geo_linkage |> 
   select(all_of(geolink_target)) |> 
   distinct(dt_mun, .keep_all = TRUE)
 
@@ -1003,3 +1013,76 @@ p3
 ```
 
 # 
+
+```{r}
+
+
+gdh_ridges <- gdh_base_join |> 
+  left_join(
+    geo_linkage_join,
+    by = "dt_mun"
+  )
+
+anti_join(gdh_base_join, geo_linkage_join, by = "dt_mun")
+
+# nem todos tinham distrito/municipio, havia NA 
+gdh_ridges_unique <- gdh_ridges |> 
+  group_by(distrito_2013) |> 
+  mutate(
+    municipio_2013_f = as.factor(municipio_2013)
+    )
+  )
+  # filter(
+  #   distrito_2013 == NA
+  # ) 
+
+ridges_plot <- gdh_ridges |> 
+  filter(
+    cod_dist_chr.x != "99",
+    cod_conc_chr.x != "99" 
+  )
+
+p6 <- ridges_plot |>
+  group_by(regiao_2024) |> 
+  ggplot(aes(x = idade, y = regiao_2024)) + 
+  geom_density_ridges() +
+  theme_classic()
+
+p6
+
+
+p6_1 <- ridges_plot |>
+  group_by(uls_2024) |> 
+  ggplot(aes(x = idade, y = uls_2024)) + 
+  geom_density_ridges() +
+  theme_classic()
+
+p7
+
+# fazer por distrito 
+
+p6_2 <- ridges_plot |>
+  group_by(dsp) |> 
+  ggplot(aes(x = idade, y = dsp)) + 
+  geom_density_ridges() +
+  theme_classic()
+
+p6_2
+
+
+
+
+p6_3 <- ridges_plot |> 
+  filter(
+    idade >= 0
+  ) |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf))
+  ) |> 
+  group_by() |> 
+  ggplot(aes(x = tem, y = adm_tip, fill = idade_cat)) + 
+  geom_density_ridges() +
+  theme_classic()
+  
+p6_3
+```
