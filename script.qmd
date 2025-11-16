@@ -35,7 +35,7 @@ execute:
   message: false
 ---
 
-# 1. Introdução 
+# Introdução 
 
 O presente projeto foi desenvolvido no âmbito do **Capstone** do curso [**Fundamentos de Data Science na Saúde: Aplicações com R**](https://www.ensp.unl.pt/curso/fundamentos-de-data-science-na-saude-aplicacoes-com-r/) da [**Escola Nacional de Saúde Pública**](https://www.ensp.unl.pt/) [@ENSP_FundamentosDataScience2025].
 
@@ -95,9 +95,9 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
 -   INE - Populacao 2017 -
 
-## 2. Objetivos do estudo
+## Objetivos do estudo
 
-## 2.1. Objetivo geral
+## Objetivo geral
 
 O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave e Amadora-Sintra.
 
@@ -108,7 +108,7 @@ Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistenc
 3.  ⁠Avaliar diferenças entre ULS
     1.  limitações de codificação e de qualidade dos dados.
 
-## 2.2. Objetivos específicos
+## Objetivos específicos
 
 -   Caracterizar a população residente nos concelhos correspondentes às áreas das ULS Amadora/Sintra
 
@@ -124,7 +124,7 @@ Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistenc
     -   problemas de saúde (top 5)
     -   Taxa de mortalidade
 
-# 3. Importação e preparação dos dados 
+# Importação e preparação dos dados 
 
 ```{r}
 #| warning: false
@@ -183,7 +183,7 @@ remove(pkg)
 
 ```
 
-## 3.1 Importação dos dados
+## Importação dos dados
 
 ```{r importation and cleaning}
 
@@ -207,7 +207,7 @@ gdh_group <- import("data/data_gdh/grupos_gdh.csv")
 
 ```
 
-# 4. Análise Exploratória e Limpeza 
+# Análise Exploratória e Limpeza 
 
 ```{r}
 
@@ -307,8 +307,6 @@ var_summarise_df <- function(df, x) {
   return(df_out)
 }
 ```
-
-# 
 
 ## Base Gdh e variáveis
 
@@ -827,11 +825,10 @@ p4_2 <- ggplot(
 ) +
   geom_density(alpha=.4) +
   facet_grid(~uls_2024) +
-  labs(title = "Nº Episodios por grupo etário",
-       subtitle = "ULS Amadora/Sintra e ULS Médio Ave",
+  labs(title = "Distribuição de Episodios por idade",
        y = "Densidade",
-       x = "Grupo etário", 
-       caption = "Autores:") +
+       x = "Idade", 
+       caption = "Autores: IT e JMR") +
   theme_minimal()
 
 p4_2
@@ -1144,8 +1141,6 @@ p7_1
 
 ```
 
-# 
-
 ```{r}
 
 
@@ -1232,7 +1227,7 @@ dias_int_sum <-  dias_int_sum |>
 # p8_4
 ```
 
-# 5. Visualização dos dados
+# Visualização dos dados
 
 ```{r}
 
@@ -1240,7 +1235,7 @@ dias_int_sum <-  dias_int_sum |>
 
 ```
 
-# 6. Bibliografia/Referências
+# Bibliografia/Referências
 
 ::: {#refs}
 :::
