@@ -28,12 +28,26 @@ gdh_pca <-  gdh_base_clean |>
   select(
     sexo,
     idade,
-    dias_int, 
-    adm_tip,
-    tipo_port_apr31, 
-    dsp, 
-    dt_mun,
+    dias_int
   )
+
+
+pca_rec <- recipe(~ ., data = gdh_pca) %>%
+  step_rm(label) %>%
+  step_normalize(all_predictors())
+
+pca_wf <- workflow() %>%
+  add_recipe(pca_rec)
+
+pca_complete %>%
+  extract_fit_engine() %>%
+  fviz_dend(main = "Complete")
+
+#  adm_tip,
+    # tipo_port_apr31, 
+    # dsp, 
+    # dt_mun,
+
 
 
 ```

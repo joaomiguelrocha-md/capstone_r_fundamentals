@@ -66,18 +66,20 @@ theme_map <- function(...) {
 
 gdh_uls_comm <- comm_pt |> 
   mutate(
-    municipio_2013 = geodsg
+    municipio_2013 = NAME_2
   ) |> 
   right_join(
     gdh_uls,
     by = "municipio_2013"
   )
 
+PT_nuts <- gisco_get_nuts(country = "Portugal", nuts_level = 3)
+
 uls_map <- ggplot() +
   geom_sf(data = comm_pt,
           aes(fill = NAME_1), 
           size = 0.8,
-          colour = NA,
+          colour = "black",
           # color = "darkgray",
           fill = "lightgray"
           ## fill = "white"
@@ -107,6 +109,7 @@ uls_map <- ggplot() +
     legend.text = element_blank() # element_text(size = 8, colour = "gray50")
   )
 
+uls_map
 ggsave("mapa_uls_junto.png", uls_map) 
 
 ulsmave_map <- ggplot() +

@@ -156,6 +156,8 @@ var_summarise_df <- function(df, x) {
 
 # Análise Exploratória 
 
+## Base Gdh e variáveis 
+
 ```{r}
 
 # Base dados gdh 
@@ -196,43 +198,11 @@ Erros tipo variaveis
 
 ```{r}
 
+# mapeia categorias de variávies chr 
+
 gdh_unique <- gdh_base_raw |>
   select(where(is.character)) |> 
   map(unique)
-
-gdh_base_raw |> 
-  count(
-    `tipo_port APR31` == "Amb"
-    )
-
-gdh_base_raw |> 
-  count(
-    `tipo_port APR31` == "Int",
-    dias_int == 0 
-    ) 
-  
-total_icd10 <- gdh_join_final |> 
-  group_by(icd10_code) |> 
-  summarise(total = n()) |>
-  arrange(desc(total)) |> 
-  right_join(
-    icd10_codes_pt,
-    by = "icd10_code"
-  )
-
-total_icd10 <- gdh_join_final |> 
-  group_by(uls_2024, dt_mun, icd10_code) |> 
-  summarise(total = n()) |>
-  arrange(desc(total)) |> 
-  left_join(
-    icd10_codes_pt,
-    by = "icd10_code"
-  )
-
-total_icd10_uls <- gdh_join_final |> 
-  group_by(icd10_code, tipo_port_apr31, uls_2024) %>%
-  summarise(total = n()) %>%
-  arrange(desc(total)) 
 
 
 gdh |>
@@ -283,6 +253,8 @@ cod_diagnostico - ver se dao todos match com icd10.csv
 
 Fazer o mesmo para restantes bases de dados
 
+### ICD10 
+
 ```{r}
 
 
@@ -292,6 +264,29 @@ tabela01 <- icd10_summary |>
   gt() 
 
 tabela01 
+
+total_icd10 <- gdh_join_final |> 
+  group_by(icd10_code) |> 
+  summarise(total = n()) |>
+  arrange(desc(total)) |> 
+  right_join(
+    icd10_codes_pt,
+    by = "icd10_code"
+  )
+
+total_icd10 <- gdh_join_final |> 
+  group_by(uls_2024, dt_mun, icd10_code) |> 
+  summarise(total = n()) |>
+  arrange(desc(total)) |> 
+  left_join(
+    icd10_codes_pt,
+    by = "icd10_code"
+  )
+
+total_icd10_uls <- gdh_join_final |> 
+  group_by(icd10_code, tipo_port_apr31, uls_2024) %>%
+  summarise(total = n()) %>%
+  arrange(desc(total)) 
 ```
 
 -   todas as variáveis são chr
@@ -349,6 +344,9 @@ code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
 
 gdh_base_clean <- gdh_base_raw |> 
   clean_names() |> 
+  filter( 
+    idade != -1
+    ) |> 
   rename(
     cod_dist = distrito,
     cod_conc = concelho,
@@ -360,6 +358,8 @@ gdh_base_clean <- gdh_base_raw |>
     code_length = nchar(icd10_code)
     )
 
+
+# CÓDIGOS RESIDÊNCIA 
 gdh_base_join <- gdh_base_clean |> 
   left_join(
     code_residence,
@@ -388,8 +388,9 @@ icd10_codes_pt %>%
   count(icd10_code, code_length) %>%
   filter(n > 1)
 
-# join grandes grupos (gcd_apr31)
-#verificar duplicados - não há
+# GDH GROUP
+## join grandes grupos (gcd_apr31)
+## verificar duplicados - não há
 gdh_group <- gdh_group |> 
   clean_names() |> 
   rename(
@@ -415,6 +416,7 @@ gdh_base_join <- gdh_base_clean |>
 
 # join concelho e municipio 
 # foi necessario criar vetor - passar de int a chr 
+# geo_linkage - filtrar repetidos (concelho) para join
 
 geo_linkage <- geo_linkage |>
   mutate(
@@ -438,11 +440,14 @@ geo_linkage_join <- geo_linkage |>
 
 gdh_join_final <- gdh_base_join |> 
   left_join(
-    geo_linkage_clean,
+    geo_linkage_join,
     by = "dt_mun") 
 
 # Base de dados apenas com ULS Amadora/Sintra, ULS Médio Ave
-gdh_uls <- gdh_join_final |> 
+gdh_uls <- gdh_join_final |>
+  filter(
+    cod_dist != 99
+  ) |> 
   filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
 
 
@@ -508,7 +513,8 @@ p4_01 <- gdh_base_clean |>
     aes(x = 1, y = value, label = value),
     hjust = -0.3,
     vjust = -0.3
-    ) +  
+    ) + 
+  coord_flip() + 
   theme_minimal() +
   theme(
     axis.line.x = element_blank(),
@@ -524,7 +530,7 @@ p4_01
 p4_02 <- gdh_base_clean |>
   filter(
     sexo != "Indeterminado"
-  ) |> 
+  ) |>
   ggplot() +
   geom_density(
     aes(x = idade)
@@ -539,6 +545,32 @@ p4_02 <- gdh_base_clean |>
 p4_02
 
 
+# 
+
+# p4_03 <- gdh_base_clean |>
+#   filter(
+#     sexo != "Indeterminado"
+#   ) |>
+#   ggplot() +
+#   geom_density(
+#     aes(x = idade)
+#     ) +
+#   geom_boxplot(
+#     aes(x = idade, y = 0.5)
+#     ) +
+#   geom_text(
+#     data = idade_sumario, 
+#     aes(x = value, y = 0.5, label = value),
+#     hjust = -0.3,
+#     vjust = -0.3
+#     ) + 
+#   theme_minimal() 
+#   # theme(
+#   #   axis.line.x = element_blank(),
+#   #   axis.text.x = element_blank()
+#   # )
+#   
+# p4_03
 ```
 
 Sexo
@@ -556,6 +588,15 @@ p4_1 <- gdh_base_clean |>
   geom_boxplot(
     aes(y = idade, fill = sexo)
     ) +
+  geom_boxplot(
+    aes(x = 1, y = idade)
+    ) +
+  geom_text(
+    data = idade_sumario, 
+    aes(x = 1, y = value, label = value),
+    hjust = -0.3,
+    vjust = -0.3
+    ) + 
   theme_classic() +
   theme(
     axis.line.x = element_blank(),
@@ -565,6 +606,8 @@ p4_1 <- gdh_base_clean |>
 p4_1
 
 # Ficava mais bonito ribbon 
+
+
 ```
 
 ### Caracterizar a população residente nas áreas correspondentes às duas ULS
@@ -649,10 +692,17 @@ p01
 
 ```{r}
 
+gdh_uls <- gdh_join_final |>
+  filter(
+    cod_dist != 99
+  ) |> 
+  filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
+
 p4_0 <- gdh_uls |> 
   mutate(
-    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
   ) |> 
+  group_by(idade_cat) |> 
   ggplot() +
   geom_bar(
     aes(x = uls_2024, fill = idade_cat),
@@ -679,9 +729,15 @@ p4_0 <- gdh_uls |>
 
 p4_0
 
-p4_1 <- gdh_uls |> 
+gdh_uls_check <- gdh_uls |> 
   mutate(
     idade_cat = cut(idade, c(0, 18, 65, Inf))
+  ) |> 
+  group_by(idade_cat)
+
+p4_1 <- gdh_uls |> 
+  mutate(
+    idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
   ) |>
   ggplot() +
   geom_bar(
@@ -698,9 +754,10 @@ p4_1 <- gdh_uls |>
 
 p4_1
 
+## Idade total por  ULS 
 p4_2 <- gdh_uls |> 
   mutate(
-    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
     ) |>
   count(uls_2024, idade_cat) |> 
   mutate(
@@ -725,7 +782,7 @@ p4_2
 
 p4_2 <- gdh_uls |> 
   mutate(
-    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
   ) |> 
   ggplot() +
   geom_bar(
@@ -737,7 +794,7 @@ p4_2 <- gdh_uls |>
     aes(label = c(after_stat(prop), "(n)")),
     position = position_fill(vjust = 0.5)
   ) +
-  theme_classic() +
+  theme_classic() 
 
 
 p4_2
@@ -751,7 +808,7 @@ p4_2
 # Distribuição por sexo ULS 
 p03 <- total_ep_uls |> 
   ggplot(aes(x = uls_2024, fill = sexo)) +
-  geom_bar() +
+  geom_bar(position = "fill") +
   scale_fill_viridis_d(end = .5) +
  # facet_grid(~uls_2024) +
   theme(
@@ -802,32 +859,34 @@ tabela1 <- tabela1 |>
 
 tabela1
 
-tabela2 <- tbl_summary(
-  gdh_uls,
-  include = c(uls_2024, adm_tip, sexo, idade_cat_ine, dsp, descricao_apr31),
-  by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
-  missing = "ifany", # Excluir dados ausentes do resumo
-) |>
-  modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
-  add_n() |>  # Adicionar uma coluna para contar observações não ausentes
-  # add_p() |>  # Realizar testes estatísticos para comparar grupos
-  modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
-  bold_labels() # Tornar as etiquetas em negrito para ênfase
 
-tabela2 <- tabela2 |> 
-  as_gt() |>  
-  tab_header(
-    title = md("**Risco por ULS**") ,
-    subtitle = "Por sexo e idade"
-  ) |>
-  tab_source_note(
-    source_note = md("Fonte: gdh")
-  ) |>
-  fmt_number( decimals = 3) |>   
-  opt_stylize(style = 1, color = "gray") |> 
-  opt_align_table_header(align = "left") 
-
-tabela2
+## Deixar por sexo, retirar esta 
+# tabela2 <- tbl_summary(
+#   gdh_uls,
+#   include = c(uls_2024, adm_tip, sexo, idade_cat_ine, dsp, descricao_apr31),
+#   by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
+#   missing = "ifany", # Excluir dados ausentes do resumo
+# ) |>
+#   modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
+#   add_n() |>  # Adicionar uma coluna para contar observações não ausentes
+#   # add_p() |>  # Realizar testes estatísticos para comparar grupos
+#   modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
+#   bold_labels() # Tornar as etiquetas em negrito para ênfase
+# 
+# tabela2 <- tabela2 |> 
+#   as_gt() |>  
+#   tab_header(
+#     title = md("**Risco por ULS**") ,
+#     subtitle = "Por sexo e idade"
+#   ) |>
+#   tab_source_note(
+#     source_note = md("Fonte: gdh")
+#   ) |>
+#   fmt_number( decimals = 3) |>   
+#   opt_stylize(style = 1, color = "gray") |> 
+#   opt_align_table_header(align = "left") 
+# 
+# tabela2
 
 
 # Contar total de observações por grupo etário
@@ -932,9 +991,9 @@ p3 <- gdh_uls |>
   ggplot(
     aes(x = uls_2024, y = freq, fill = mortalidade_apr31)
     )+
-  geom_bar(position = "stack", stat = "identity") +
+  geom_bar(position = "fill", stat = "identity") +
   scale_fill_viridis_d(end = 0.5) +
-  geom_text(aes(label = freq), position = position_stack(vjust = 1), colour = "white") +
+  geom_text(aes(label = percent(freq, 1), (vjust = 1), colour = "white")) +
   labs(fill = "mortalidade_apr31", y = "Proportion", x = "ULS 2024")
 
 p3
@@ -1020,10 +1079,10 @@ dias_int_sum <-  dias_int_sum |>
 
 p6_3 <- ridges_plot |> 
   filter(
-    idade != -1
+    idade != -1 & 1 <= dias_int <10
   ) |> 
   mutate(
-    idade_cat = cut(idade, c(0, 18, 65, Inf))
+    idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
   ) |> 
   group_by(idade_cat) |> 
   ggplot(aes(x = dias_int, y = idade_cat)) + 
