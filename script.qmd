@@ -81,6 +81,8 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
     ![](images/clipboard-1803662035.png)
 
+    Fonte: INE
+
 ------------------------------------------------------------------------
 
 ### **Bases de dados utilizadas**
