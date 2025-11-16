@@ -17,3 +17,23 @@ editor: visual
     -   What other variables might affect the relationship?
 
     -   Does the relationship change if you look at individual subgroups of the data?
+
+```{r}
+gdh_pca <-  gdh_base_clean |> 
+  filter(
+    idade != -1,
+    cod_dist_chr != "99",
+    cod_conc_chr != "99"
+  ) |> 
+  select(
+    sexo,
+    idade,
+    dias_int, 
+    adm_tip,
+    tipo_port_apr31, 
+    dsp, 
+    dt_mun,
+  )
+
+
+```

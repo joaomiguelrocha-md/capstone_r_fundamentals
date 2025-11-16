@@ -50,84 +50,7 @@ Tarefas
 
 ------------------------------------------------------------------------
 
-## 3. Importação e preparação dos dados (Passar a importação de dados e colocar logo no início)
-
-```{r}
-#| warning: false
-#| message: false
-#| error: false
-
-set.seed(123)
-
-rm(list = ls(all.names = TRUE)) 
-required_packages <- c(
-                       "tidyverse",
-                       "rio",
-                       "scales",
-                       "here",
-                       "patchwork",
-                       "sf", 
-                       "ggthemes",
-                       "giscoR",
-                       "eurostat",
-                       "sysfonts", 
-                       "showtext", 
-                       "scales",
-                       "geodata", 
-                       "osmdata", 
-                       "leaflet",
-                       "janitor",
-                       "assertr",
-                       "data.validator",
-                       "forcats",
-                       "data.table",
-                       "broom",
-                       "gt",
-                       "gtsummary",
-                       "glm2",
-                       "performance",
-                       "see",
-                       "readxl",
-                       "purrr",
-                       "tibble",
-                       "ggridges"
-                       )      
-
-for (pkg in required_packages) {
- 
-  if (!pkg %in% rownames(installed.packages())) {
-    install.packages(pkg)
-  }
-
-  library(pkg, character.only = TRUE)
-}
-remove(required_packages)
-remove(pkg)
-
-```
-
-```{r importation and cleaning}
-gdh_base_raw <-  import("data/data_gdh/base_gdh_icd10_no_freg.csv")
-
-code_residence <- import("data/data_gdh/codigos_residencia.csv") 
-# Não foi necessário usar 
-
-geo_linkage <- import("data/data_gdh/geo_linkage_2024_v6.csv")
-
-comm_pt <- st_read("data/map_json_portugal/concelhos_portugal_light.json")
-
-
-# residentes_2013 <- read_delim("data/populacao_residente_2013.csv", 
-#     delim = ";", 
-#     escape_double = FALSE, 
-#     trim_ws = TRUE)
-
-icd10_codes <- import("data/data_gdh/codigos_diagnostico_icd10.csv")
-
-gdh_group <- import("data/data_gdh/grupos_gdh.csv")
-
-
-```
+## Funções utilizadas nesta secção 
 
 ```{r}
 
@@ -153,6 +76,87 @@ df_summarise <- function(df) {
 ```
 
 ```{r}
+{r}
+# Funções 
+## Mudar para português
+
+var_summarise <- summarise_variable <- function(x) {
+  if (is.numeric(x)) {
+    out <- list(
+      Min = min(x, na.rm = TRUE),
+      Max = max(x, na.rm = TRUE),
+      Mean = mean(x, na.rm = TRUE),
+      Median = median(x, na.rm = TRUE),
+      Quantiles = quantile(x, na.rm = TRUE),
+      Total = sum(x, na.rm = TRUE),
+      NAs = sum(is.na(x))
+    )
+  } else if (is.character(x) || is.factor(x)) {
+    tbl <- table(x, useNA = "ifany")
+    freq <- as.numeric(tbl)
+    prop <- as.numeric(prop.table(tbl))
+    cum_freq <- cumsum(freq)
+    names(freq) <- names(prop) <- names(tbl)
+    out <- list(
+      Unique_Values = unique(na.omit(x)),
+      Frequency = freq,
+      Proportion = prop,
+      CumFreq = cum_freq,
+      NAs = sum(is.na(x))
+    )
+  } else {
+    out <- list(Warning = "Variable type not supported")
+  }
+  return(out)
+}
+
+var_summarise_df <- function(df, x) {
+  # Extract the variable vector from df using x as column name (string)
+  var <- df[[x]]
+  
+  if (is.numeric(var)) {
+    df_out <- data.frame(
+      Statistic = c("Min", "Max", "Mean", "Median", "Total", "NAs"),
+      Value = c(
+        min(var, na.rm = TRUE),
+        max(var, na.rm = TRUE),
+        mean(var, na.rm = TRUE),
+        median(var, na.rm = TRUE),
+        sum(var, na.rm = TRUE),
+        sum(is.na(var))
+      )
+    )
+    # Add quantiles as separate rows
+    quants <- quantile(var, na.rm = TRUE)
+    quant_df <- data.frame(
+      Statistic = paste0("Quantile_", names(quants)),
+      Value = as.numeric(quants)
+    )
+    df_out <- rbind(df_out, quant_df)
+  } else if (is.character(var) || is.factor(var)) {
+    tbl <- table(var, useNA = "ifany")
+    freq <- as.numeric(tbl)
+    prop <- prop.table(tbl)
+    cum_freq <- cumsum(freq)
+    df_out <- data.frame(
+      Value = names(tbl),
+      Frequency = freq,
+      Proportion = prop,
+      CumFrequency = cum_freq
+    )
+  } else {
+    df_out <- data.frame(Warning = "Variable type not supported")
+  }
+  
+  return(df_out)
+}
+```
+
+------------------------------------------------------------------------
+
+# Análise Exploratória 
+
+```{r}
 
 # Base dados gdh 
 # checking for NA
@@ -164,6 +168,33 @@ tabela0 <- gdh_raw_summary |>
 tabela0
 
 gtsave(tabela0, filename = "gdh_tabela_limpeza.html") 
+
+
+```
+
+Avaliação inicial
+
+Total observações vs NA
+
+-   n = 1711879
+
+-   NAs
+
+    -   hora_urgencia: n(1.327.998) - vamos usar? se não apagar
+
+    -   severidade: 225 em branco -\> transformar em "desconhecido"
+
+    -   mortalidade 225 em branco -\> "NA" - transformar em desconhecido para proporções
+
+Erros tipo variaveis
+
+-   gcd_apr31 - int devia ser chr
+
+-   concelho e distrito - estão como int - sao codigos numéricos deve ser chr
+
+-   freguesia - remover, sem valores que possamos utilizar
+
+```{r}
 
 gdh_unique <- gdh_base_raw |>
   select(where(is.character)) |> 
@@ -218,32 +249,6 @@ tabela500 <- gdh_join_final_sum |>
 
 tabela500
 ```
-
-Avaliação inicial
-
-Total observações vs NA
-
--   n = 1711879
-
--   NA
-
-    -   hora_urgencia: n(1.327.998) -
-
-    -   sexo: 3ª categoria - "Indeterminado" contabilizar como NA
-
-    -   severidade: 225 em branco -\> transformar em "desconhecido"
-
-    -   mortalidade 225 em branco -\>
-
-Erros tipo variaveis
-
--   gcd_apr31 - int devia ser chr
-
--   concelho e distrito - estão como int - sao codigos numéricos deve ser chr
-
--   freguesia - remover, sem valores que possamos utilizar
-
--   
 
 Outros:
 
@@ -462,83 +467,7 @@ gdh_uls <- gdh_join_final |>
 
 # 4. Análise exploratória dos dados
 
-```{r}
-# Funções 
-## Mudar para português
-
-var_summarise <- summarise_variable <- function(x) {
-  if (is.numeric(x)) {
-    out <- list(
-      Min = min(x, na.rm = TRUE),
-      Max = max(x, na.rm = TRUE),
-      Mean = mean(x, na.rm = TRUE),
-      Median = median(x, na.rm = TRUE),
-      Quantiles = quantile(x, na.rm = TRUE),
-      Total = sum(x, na.rm = TRUE),
-      NAs = sum(is.na(x))
-    )
-  } else if (is.character(x) || is.factor(x)) {
-    tbl <- table(x, useNA = "ifany")
-    freq <- as.numeric(tbl)
-    prop <- as.numeric(prop.table(tbl))
-    cum_freq <- cumsum(freq)
-    names(freq) <- names(prop) <- names(tbl)
-    out <- list(
-      Unique_Values = unique(na.omit(x)),
-      Frequency = freq,
-      Proportion = prop,
-      CumFreq = cum_freq,
-      NAs = sum(is.na(x))
-    )
-  } else {
-    out <- list(Warning = "Variable type not supported")
-  }
-  return(out)
-}
-
-var_summarise_df <- function(df, x) {
-  # Extract the variable vector from df using x as column name (string)
-  var <- df[[x]]
-  
-  if (is.numeric(var)) {
-    df_out <- data.frame(
-      Statistic = c("Min", "Max", "Mean", "Median", "Total", "NAs"),
-      Value = c(
-        min(var, na.rm = TRUE),
-        max(var, na.rm = TRUE),
-        mean(var, na.rm = TRUE),
-        median(var, na.rm = TRUE),
-        sum(var, na.rm = TRUE),
-        sum(is.na(var))
-      )
-    )
-    # Add quantiles as separate rows
-    quants <- quantile(var, na.rm = TRUE)
-    quant_df <- data.frame(
-      Statistic = paste0("Quantile_", names(quants)),
-      Value = as.numeric(quants)
-    )
-    df_out <- rbind(df_out, quant_df)
-  } else if (is.character(var) || is.factor(var)) {
-    tbl <- table(var, useNA = "ifany")
-    freq <- as.numeric(tbl)
-    prop <- prop.table(tbl)
-    cum_freq <- cumsum(freq)
-    df_out <- data.frame(
-      Value = names(tbl),
-      Frequency = freq,
-      Proportion = prop,
-      CumFrequency = cum_freq
-    )
-  } else {
-    df_out <- data.frame(Warning = "Variable type not supported")
-  }
-  
-  return(df_out)
-}
-```
-
-Idade
+### Idade 
 
 ```{r}
 # variabilidade 
@@ -594,7 +523,7 @@ p4_01
 
 p4_02 <- gdh_base_clean |>
   filter(
-    uls_2024
+    sexo != "Indeterminado"
   ) |> 
   ggplot() +
   geom_density(
@@ -1055,9 +984,10 @@ p6_1 <- ridges_plot |>
   group_by(uls_2024) |> 
   ggplot(aes(x = idade, y = uls_2024)) + 
   geom_density_ridges() +
+  facet_wrap(~regiao_2024) +
   theme_classic()
 
-p7
+p6_1
 
 # fazer por distrito 
 
@@ -1070,17 +1000,33 @@ p6_2 <- ridges_plot |>
 p6_2
 
 
+p6_7 <- ridges_plot |>
+  group_by(sexo) |> 
+  ggplot(aes(x = idade, y = sexo)) + 
+  geom_density_ridges() +
+  theme_classic()
+
+p6_7
+
+
+
+dias_int_sum <- var_summarise_df(gdh_base_clean, "dias_int")
+
+dias_int_sum <-  dias_int_sum |> 
+  mutate(
+    value = round(Value, 2)
+  )
 
 
 p6_3 <- ridges_plot |> 
   filter(
-    idade >= 0
+    idade != -1
   ) |> 
   mutate(
     idade_cat = cut(idade, c(0, 18, 65, Inf))
   ) |> 
-  group_by() |> 
-  ggplot(aes(x = tem, y = adm_tip, fill = idade_cat)) + 
+  group_by(idade_cat) |> 
+  ggplot(aes(x = dias_int, y = idade_cat)) + 
   geom_density_ridges() +
   theme_classic()
   
