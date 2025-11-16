@@ -12,7 +12,9 @@ editor: visual
 
 # 1. Introdução (Contexto)
 
-> -\[x\] Explique qual base de dados utilizou e descreva as variáveis empregadas, assim como o objetivo da exploração da base de dados.
+> -   [ ] Explique qual base de dados utilizou e descreva as variáveis empregadas, assim como o objetivo da exploração da base de dados.
+>
+> <!-- -->
 >
 > -   O código de suas análises deve estar visível.
 >

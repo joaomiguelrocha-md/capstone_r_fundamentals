@@ -19,17 +19,17 @@ editor: visual
     -   Does the relationship change if you look at individual subgroups of the data?
 
 ```{r}
-gdh_pca <-  gdh_base_clean |> 
+gdh_rf <-  gdh_base_clean |> 
   filter(
     idade != -1,
     cod_dist_chr != "99",
     cod_conc_chr != "99"
   ) |> 
-  select(
-    sexo,
-    idade,
-    dias_int
-  )
+ mutate(int_prolongado = ifelse(dias_int > median(dias_int), 1, 0),
+        int_prolongado = factor(int_prolongado),
+        sexo = factor(sexo),
+        cod_conc = factor(cod_conc))
+
 
 
 pca_rec <- recipe(~ ., data = gdh_pca) %>%
@@ -49,5 +49,89 @@ pca_complete %>%
     # dt_mun,
 
 
+
+```
+
+```{r}
+# Load libraries
+library(tidymodels)
+library(dplyr)
+
+# Assuming your dataframe is called df and has columns: sex, age, city, duration_of_stay
+
+# 1. Prepare the binary target and factor variables
+
+gdh_ml <-  gdh_base_clean |> 
+  filter(
+    idade != -1,
+    cod_dist_chr != "99",
+    cod_conc_chr != "99"
+  ) |> 
+ mutate(
+   int_prolongado = ifelse(dias_int > 10, "prolongado", "curto"),
+   int_prolongado = factor(int_prolongado),
+   sexo = factor(sexo),
+   cod_conc = factor(cod_conc))
+
+# 2. Split data into training and testing sets (stratified)
+set.seed(123)
+data_split <- initial_split(gdh_ml, prop = 0.7, strata = int_prolongado)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+
+k_folds <- vfold_cv(train_data, v = 10, strata = int_prolongado)
+# 3. Define recipe for pre-processing
+data_recipe <- recipe(gdh_ml ~ ., data = train_data) %>%
+  step_dummy(all_nominal_predictors()) |>    # Convert sex, city to dummies
+  step_normalize(all_numeric(), -all_outcomes())  # Remove zero-variance predictors if any
+
+# 4. Specify logistic regression model
+log_spec <- logistic_reg()  |> 
+  set_engine("glm") |> 
+  set_mode("classification")
+
+# 5. Logistic regression workflow
+log_wflow <- workflow()  |> 
+  add_recipe(data_recipe)  |> 
+  add_model(log_spec)
+
+# 6. Fit logistic regression model
+log_fit <- fit(log_wflow, data = train_data)
+
+# 7. Predict and evaluate logistic regression model on test set
+logistic_preds <- predict(logistic_fit, test_data, type = "prob") %>%
+  bind_cols(predict(logistic_fit, test_data)) %>%
+  bind_cols(test_data %>% select(int_prolongado))
+
+# Evaluate performance
+logistic_roc_auc <- roc_auc(logistic_preds, truth = int_prolongado, .pred_prolongado)
+logistic_accuracy <- accuracy(logistic_preds, truth = int_prolongado, .pred_class)
+
+# 8. Random Forest model specification
+rf_spec <- rand_forest(trees = 500) %>%
+  set_engine("ranger") %>%
+  set_mode("classification")
+
+# 9. Random Forest workflow
+rf_wf <- workflow() %>%
+  add_recipe(data_recipe) %>%
+  add_model(rf_spec)
+
+# 10. Fit random forest model
+rf_fit <- fit(rf_wf, data = train_data)
+
+# 11. Predict and evaluate random forest model on test set
+rf_preds <- predict(rf_fit, test_data, type = "prob") %>%
+  bind_cols(predict(rf_fit, test_data)) %>%
+  bind_cols(test_data %>% select(int_prolongado))
+
+rf_roc_auc <- roc_auc(rf_preds, truth = int_prolongado, .pred_long)
+rf_accuracy <- accuracy(rf_preds, truth = int_prolongado, .pred_class)
+
+# 12. Print evaluation results
+logistic_roc_auc
+logistic_accuracy
+rf_roc_auc
+rf_accuracy
 
 ```

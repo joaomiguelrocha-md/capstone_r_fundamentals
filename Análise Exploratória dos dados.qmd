@@ -156,7 +156,7 @@ var_summarise_df <- function(df, x) {
 
 # Análise Exploratória 
 
-## Base Gdh e variáveis 
+## A Base Gdh e variáveis 
 
 ```{r}
 
@@ -1079,7 +1079,7 @@ dias_int_sum <-  dias_int_sum |>
 
 p6_3 <- ridges_plot |> 
   filter(
-    idade != -1 & 1 <= dias_int <10
+    idade != -1 | dias_int < 10
   ) |> 
   mutate(
     idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)

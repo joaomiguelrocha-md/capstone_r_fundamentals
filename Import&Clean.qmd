@@ -6,10 +6,6 @@ editor: visual
 
 # Importação de dados 
 
-```{r}
-
-```
-
 ## Importação e preparação dos dados (Passar a importação de dados e colocar logo no início)
 
 ```{r}
@@ -53,8 +49,7 @@ required_packages <- c(
                        "ggridges",
                        "tidymodels",
                        "tidyclust",
-                       "factoextra",
-                       "ISLR"
+                       "factoextra"
                        )      
 
 for (pkg in required_packages) {
