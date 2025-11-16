@@ -1,7 +1,7 @@
 ---
 title: "Capstone"
 subtitle: "TBA"
-author: "IVT; JMR"
+author: "IT; JMR"
 course: 
     - Fundamentos de Data Science na Saúde: Aplicações com R, Escola Nacional de Saúde Pública
 date: today
@@ -35,17 +35,15 @@ execute:
   message: false
 ---
 
-# Introdução 
+# Introdução
 
 O presente projeto foi desenvolvido no âmbito do **Capstone** do curso [**Fundamentos de Data Science na Saúde: Aplicações com R**](https://www.ensp.unl.pt/curso/fundamentos-de-data-science-na-saude-aplicacoes-com-r/) da [**Escola Nacional de Saúde Pública**](https://www.ensp.unl.pt/) [@ENSP_FundamentosDataScience2025].
 
 ![](images/RStudio_logo_flat.svg.png){width="295"} Fonte: [@RStudioLogo]
 
-O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados de internamentos hospitalares (GDH) e relacionando-a com variáveis geográficas e populacionais. O objetivo final é demonstrar o potencial da análise de dados em R como ferramenta de apoio à tomada de decisão em saúde pública e à avaliação do desempenho das ULS.
+O trabalho tem como propósito aplicar técnicas de ciência de dados na análise de uma base real de morbilidade hospitalar, a base de Grupos de Diagnóstico Homogéneo (GDH) disponibilizada pela Administração Central do Sistema de Saúde (ACSS). A crescente complexidade dos cuidados hospitalares e a transição para o modelo das Unidades Locais de Saúde (ULS) colocam desafios importantes para a gestão integrada dos recursos e para a equidade no acesso. Neste contexto, comparar realidades distintas (como as ULS do Médio Ave e de Amadora-Sintra) permite compreender diferenças territoriais na carga de doença e na resposta dos serviços hospitalares, contribuindo para uma visão mais informada sobre o desempenho do SNS. Assim, este estudo combina análise demográfica, epidemiológica e operacional, explorando a base de dados e relacionando-a com variáveis geográficas e populacionais.
 
-### A ULS
-
--   imagem
+## A ULS
 
 -   Caracterizar a população residente nas áreas correspondentes às duas ULS (população 2017)
 
@@ -72,14 +70,16 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
 -   Concelhos
 
+    -   Vila Nova de Famalicão
+
     -   Santo Tirso
 
     -   Trofa
-
-    -   Vila Nova de Famalicão
 :::
 
--   total de residentes (2017)
+-   Total de residentes (2017)
+
+    ![](images/clipboard-1803662035.png)
 
 ------------------------------------------------------------------------
 
@@ -93,18 +93,16 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
 -   grupos_gdh
 
--   INE - Populacao 2017 -
-
 ## Objetivos do estudo
 
 ## Objetivo geral
 
 O projecto centra-se na análise comparativa da situação nas ULS do Médio Ave e Amadora-Sintra.
 
-Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistencial entre as Unidades Locais de Saúde (ULS) do Médio Ave e Amadora-Sintra, utilizando dados da base de Grupos de Diagnóstico Homogéneo (GDH) do SNS, com foco na caracterização demográfica, perfil de diagnósticos e desempenho hospitalar. Objetivos específicos
+Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistencial entre as ULS do Médio Ave e Amadora-Sintra, utilizando dados da base de GDH do SNS, com foco na caracterização demográfica, perfil de diagnósticos e desempenho hospitalar.
 
 1.  ⁠ ⁠Caracterizar a população residente nas áreas correspondentes às duas ULS, segundo idade, sexo e perfil de morbilidade.
-2.  Identificar e comparar os principais grupos de diagnósticos (GDH) e condições de saúde mais prevalentes em cada região.
+2.  Identificar e comparar os principais GDH e condições de saúde mais prevalentes em cada região.
 3.  ⁠Avaliar diferenças entre ULS
     1.  limitações de codificação e de qualidade dos dados.
 
@@ -120,11 +118,11 @@ Analisar e comparar os padrões de morbilidade hospitalar e a resposta assistenc
 
     -   comparar totais
     -   duração de internamento
-    -   Perfil de morbilidade (mortalidade)
+    -   perfil de morbilidade (mortalidade)
     -   problemas de saúde (top 5)
-    -   Taxa de mortalidade
+    -   taxa de mortalidade
 
-# Importação e preparação dos dados 
+# Importação e preparação dos dados
 
 ```{r}
 #| warning: false
@@ -201,14 +199,10 @@ icd10_codes <- import("data/data_gdh/codigos_diagnostico_icd10.csv")
 
 gdh_group <- import("data/data_gdh/grupos_gdh.csv")
 
-# residentes_2017 <- read_delim("data/populacao_residente_2013.csv", 
-#     delim = ";", 
-#     escape_double = FALSE, 
-#     trim_ws = TRUE)
 
 ```
 
-# Análise Exploratória e Limpeza 
+# Análise Exploratória e Limpeza
 
 ```{r}
 
@@ -235,8 +229,6 @@ df_summarise <- function(df) {
 
 ```{r}
 # Funções 
-## Mudar para português
-
 var_summarise <- summarise_variable <- function(x) {
   if (is.numeric(x)) {
     out <- list(
@@ -313,8 +305,6 @@ var_summarise_df <- function(df, x) {
 
 ```{r}
 
-# Base dados gdh 
-# checking for NA
 gdh_raw_summary <- df_summarise(gdh_base_raw)
 
 tabela0 <- gdh_raw_summary |> 
@@ -335,7 +325,7 @@ Total observações vs NA
 
 -   NAs
 
-    -   hora_urgencia: n(1.327.998) - vamos usar? se não apagar
+    -   hora_urgencia: n(1.327.998) -\> apagar variável
 
     -   severidade: n(225) em branco -\> transformar em "desconhecido"
 
@@ -390,7 +380,7 @@ severidade_APR31 - mortalidade_APR31 - 4 valores possiveis existem 5 - 225 NA s�
 cod_diagnostico - ver se dao todos match com icd10.csv 
 ```
 
-## Limpeza 
+## Limpeza
 
 ```{r}
 gdh_base_clean <- gdh_base_raw |> 
@@ -431,8 +421,6 @@ tabela0_1 <- gdh_clean_summary |>
 tabela0_1
 ```
 
-Fazer o mesmo para restantes bases de dados
-
 ### ICD10
 
 ```{r}
@@ -463,30 +451,9 @@ icd10_codes_pt <- icd10_codes |>
   ) |> 
   distinct(icd10_code, .keep_all = TRUE) # remove duplicados 
 
-# total_icd10 <- gdh_join_final |>
-#   group_by(icd10_code) |>
-#   summarise(total = n()) |>
-#   arrange(desc(total)) |>
-#   right_join(
-#     icd10_codes_pt,
-#     by = "icd10_code"
-#   )
-# 
-# total_icd10 <- gdh_join_final |>
-#   group_by(uls_2024, dt_mun, icd10_code) |>
-#   summarise(total = n()) |>
-#   arrange(desc(total)) |>
-#   left_join(
-#     icd10_codes_pt,
-#     by = "icd10_code"
-#   )
-# 
-# total_icd10_uls <- gdh_join_final |>
-#   group_by(icd10_code, tipo_port_apr31, uls_2024) %>%
-#   summarise(total = n()) %>%
-#   arrange(desc(total))
-
 ```
+
+Obs.:
 
 -   todas as variáveis são chr
 
@@ -496,7 +463,7 @@ icd10_codes_pt <- icd10_codes |>
 
 -   apagados duplicados
 
-### GDH 
+### GDH
 
 ```{r}
 
@@ -514,9 +481,11 @@ gdh_group <- gdh_group |>
   )
 ```
 
+Obs,;
+
 -   gcd_apr31 - int em vez de chr - transformar
 
-### Code Residence 
+### Code Residence
 
 ```{r}
 
@@ -527,7 +496,7 @@ tabela03 <- code_residence_sum |>
 
 tabela03
 
-code_residence <- code_residence |> # APAGAR NAO E NECESSARIO
+code_residence <- code_residence |>
   clean_names() |> 
   mutate(
     across(c(cod_dist, cod_conc), ~sprintf("%02d", .x), .names = "{.col}_chr"),
@@ -552,10 +521,9 @@ comm_pt <- comm_pt |>
   rename(municipio = NAME_2, distrito = NAME_1) |> 
   clean_names()
 
-
 ```
 
-### Geo linkage 
+### Geo linkage
 
 ```{r}
 
@@ -586,9 +554,9 @@ geo_linkage_clean <- geo_linkage |>
 
 ```
 
-## Join bases 
+## Join bases
 
-```{r }
+```{r}
 
 # CÓDIGOS RESIDÊNCIA 
 gdh_base_join <- gdh_base_clean |> 
@@ -607,20 +575,6 @@ gdh_base_join <- gdh_base_clean |>
     )
 
 
-
-
-# join concelho e municipio 
-# foi necessario criar vetor - passar de int a chr 
-# geo_linkage - filtrar repetidos (concelho) para join
-
-
-
-# residence_geo_join <- geo_linkage_target |> 
-  # left_join(
-  #   code_residence,
-  #   geo_linkage_target,
-  #   by = "dt_mun") 
-
 gdh_join_final <- gdh_base_join |> 
   left_join(
     geo_linkage_clean,
@@ -633,13 +587,6 @@ gdh_uls <- gdh_join_final |>
   ) |> 
   filter(uls_2024 %in% c("ULS de Amadora/Sintra", "ULS do Médio Ave")) 
 
-
-
-# distribuicao_idade <- function(data, uls) |> 
-#   ggplot() |> 
-#   geom_jitter(aes(x = idade, y = dias_internamento, fill = sexo)) +
-#   
-# p1 <- distribuicao_idade(gdh_base_clean, "uls medio ave")
 ```
 
 # Análise Exploratória
@@ -697,8 +644,6 @@ p4_01
 
 
 # ULS MAve e ULS A/S
-
-
 p4_02 <- gdh_base_clean |>
   ggplot() +
   geom_density(
@@ -706,43 +651,14 @@ p4_02 <- gdh_base_clean |>
     ) +
   facet_grid(~sexo) +
   theme_minimal() 
-  # theme(
-  #   axis.line.x = element_blank(),
-  #   axis.text.x = element_blank()
-  # )
+
   
 p4_02
 
 
-# 
-
-# p4_03 <- gdh_base_clean |>
-#   filter(
-#     sexo != "Indeterminado"
-#   ) |>
-#   ggplot() +
-#   geom_density(
-#     aes(x = idade)
-#     ) +
-#   geom_boxplot(
-#     aes(x = idade, y = 0.5)
-#     ) +
-#   geom_text(
-#     data = idade_sumario, 
-#     aes(x = value, y = 0.5, label = value),
-#     hjust = -0.3,
-#     vjust = -0.3
-#     ) + 
-#   theme_minimal() 
-#   # theme(
-#   #   axis.line.x = element_blank(),
-#   #   axis.text.x = element_blank()
-#   # )
-#   
-# p4_03
 ```
 
-Sexo
+### Sexo
 
 ```{r}
 
@@ -757,15 +673,6 @@ p4_1 <- gdh_base_clean |>
   geom_boxplot(
     aes(y = idade, fill = sexo)
     ) +
-  # geom_boxplot(
-  #   aes(x = 1, y = idade)
-  #   ) +
-  # geom_text(
-  #   data = idade_sumario, 
-  #   aes(x = 1, y = value, label = value),
-  #   hjust = -0.3,
-  #   vjust = -0.3
-  #   ) + 
   coord_cartesian() +
   theme_classic() +
   theme(
@@ -775,50 +682,15 @@ p4_1 <- gdh_base_clean |>
   
 p4_1
 
-# Ficava mais bonito ribbon 
-
-
 ```
 
 ```{r}
-# valores únicos 
-# hosp_id <- distinct(gdh_base, hosp_id)
-# 
-# tipo_adm <- distinct(gdh_base, adm_tip)
-# 
-# patient_id <- distinct(gdh_base, seq_number)
-# 
-# total_patients <- length(patient_id$seq_number)
-# 
-# patient_id <- patient_id |> 
-#   mutate(
-#     age_group = length(patient_id$seq_number)
-#   )
-
-# Criar as categorias (European Standard Population (ESP) 2013 e INE) 
-
-# gdh_uls <- gdh_uls |> 
-#   mutate(
-#     idade_cat_eu = cut(
-#       idade,
-#       breaks = c(0, 1, 5, 10, 15, 20, 25, 30, 35, 40, 45,
-#                  50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
-#       right = FALSE), # Criar nova categoria com divisão do grupo etário do Eurostat para análise
-#       idade_cat_ine = cut(
-#       idade,
-#       breaks = c(0, 5, 10, 15, 20, 25, 30, 35, 40, 45,
-#                  50, 55, 60, 65, 70, 75, 80, 85, Inf), 
-#       right = FALSE) # Criar nova categoria com divisão do grupo etário do INE para análise
-#   )
-
 
 # Total Episódios por ULS e Tipo de episodio 
 total_ep_uls <- gdh_uls |> 
   group_by(uls_2024, sexo, idade, idade_cat, adm_tip) %>%
   summarise(total = n()) %>%
   arrange(uls_2024)
-
-# boxplot ?  
 
 p4_2 <- ggplot(
   gdh_uls, 
@@ -833,24 +705,6 @@ p4_2 <- ggplot(
   theme_minimal()
 
 p4_2
-
-# p4_3 <- ggplot() +
-#   geom_area(
-#     gdh_uls,
-#     aes(y = ),
-#     alpha= 0.4,
-#     colour = "black",
-#     stat = "bin") +
-#   # facet_grid(~uls_2024) +
-#   labs(title = "Nº Episodios por grupo etário",
-#        subtitle = "ULS Amadora/Sintra e ULS Médio Ave",
-#        y = "Densidade",
-#        x = "Grupo etário", 
-#        caption = "Autores:") +
-#   theme_minimal()
-# 
-# p4_3
-
 
 ```
 
@@ -902,8 +756,6 @@ p4_31
 
 ```
 
-### sexo
-
 ```{r}
 
 # Distribuição por sexo ULS 
@@ -922,7 +774,7 @@ p4_4
 ```
 
 ```{r}
-# 
+
 total_uls_sex_age <- gdh_uls |> 
   group_by(uls_2024, adm_tip, sexo = as.factor(sexo), idade_cat) %>%
   summarise(total = n()) %>%
@@ -938,8 +790,8 @@ tabela4 <- tbl_summary(
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Sexo**") %>%
   add_n() |>  
   add_p() |> 
-  modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
-  bold_labels() # Tornar as etiquetas em negrito para ênfase
+  modify_header(label = "**Variável**") |>
+  bold_labels() 
 
 tabela4 <- tabela4 |> 
   as_gt() |>  
@@ -957,62 +809,17 @@ tabela4 <- tabela4 |>
 tabela4
 
 
-## Deixar por sexo, retirar esta 
-# tabela2 <- tbl_summary(
-#   gdh_uls,
-#   include = c(uls_2024, adm_tip, sexo, idade_cat_ine, dsp, descricao_apr31),
-#   by = uls_2024, # Dividir a tabela pelo estado da doença cardíaca
-#   missing = "ifany", # Excluir dados ausentes do resumo
-# ) |>
-#   modify_spanning_header(c("stat_1", "stat_2") ~ "**ULS**") %>%
-#   add_n() |>  # Adicionar uma coluna para contar observações não ausentes
-#   # add_p() |>  # Realizar testes estatísticos para comparar grupos
-#   modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
-#   bold_labels() # Tornar as etiquetas em negrito para ênfase
-# 
-# tabela2 <- tabela2 |> 
-#   as_gt() |>  
-#   tab_header(
-#     title = md("**Risco por ULS**") ,
-#     subtitle = "Por sexo e idade"
-#   ) |>
-#   tab_source_note(
-#     source_note = md("Fonte: gdh")
-#   ) |>
-#   fmt_number( decimals = 3) |>   
-#   opt_stylize(style = 1, color = "gray") |> 
-#   opt_align_table_header(align = "left") 
-# 
-# tabela2
-
-
 # Contar total de observações por grupo etário
 contagem_idade <- gdh_uls %>%
   group_by(uls_2024, as.factor(sexo), idade_cat) %>%
   summarise(total = n()) %>%
   arrange(idade_cat)
 
-# p5 <- total_ep_uls |> 
-#   ggplot() +  
-#   geom_bar(aes(x = adm_tip, fill = sexo), 
-#            stat = "count") + 
-#   geom_text(
-#     aes(x = adm_tip),
-#     label = "total",
-#     stat = "identity",
-#     position = position_stack(vjust = 0.5)
-#   ) +
-#   facet_wrap(~uls_2024) +  # Dividir o gráfico em facetas com base na variável 'tipo_de_especialidade'
-#   theme_classic()
-# 
-# p5
 ```
 
 ### Proporções
 
 ```{r}
-# grafico barras por uls e severidade problema - considerar fazer dois separados "dodge" 
-# como fazer aparecer por percentagens? 
 
 p6 <- gdh_uls |> 
   count(uls_2024, severidade_apr31) |> 
@@ -1026,29 +833,13 @@ p6 <- gdh_uls |>
   geom_text(aes(label = percent(freq, accuracy = .1)), position = position_stack(vjust = .1), colour = "white") +
   labs(fill = "severidade_apr31", y = "Proportion", x = "ULS 2024")
 
-# low hanging fruit: residentes municipio (INE) 2017 - 
-# NAs - tirar valores; retirar variaveis?; 
-# merge()
-# fazer tabela com os missings 
-
 p6
 
-
-## !!! transformar em função  
 ```
 
 ## Perfil de morbilidade
 
 ```{r}
-
-
-# total_mort_apr31 <- gdh_uls |>
-#   mutate(
-#     mort_cat = factor(mortalidade_apr31)
-#   ) |> 
-#     group_by(uls_2024, mort_cat) |> 
-#   summarise(total = n(), .groups = "drop")  |> 
-#   arrange(uls_2024)
 
 total_mort_apr31 <- gdh_uls |>
   mutate(
@@ -1069,18 +860,7 @@ p7 <- total_mort_apr31 |>
 
 p7
 
-#   group_by(uls_2024, mort_cat) %>%
-#   summarise(total = n()) #%>%
-# arrange(uls_2024)
 
-# total_mort_apr31 <- gdh_uls |>
-#   mutate(
-#     mort_cat = ifelse(is.na(mortalidade_apr31), "NA", as.character(mortalidade_apr31)),
-#     mort_cat = factor(mort_cat)
-#   ) |>
-  #
-
-# Freq Mortalidade
 p7_1 <- gdh_uls |> 
   count(uls_2024, mortalidade_apr31) |> 
   mutate(freq = (n / sum(n))) |> 
@@ -1099,7 +879,6 @@ p7_1
 
 ```{r}
 
-
 gdh_ridges <- gdh_base_join |> 
   left_join(
     geo_linkage_clean,
@@ -1108,22 +887,6 @@ gdh_ridges <- gdh_base_join |>
 
 anti_join(gdh_base_join, geo_linkage_clean, by = "dt_mun")
 
-# nem todos tinham distrito/municipio, havia NA 
-# gdh_ridges_unique <- gdh_ridges |> 
-#   group_by(distrito_2013) |> 
-#   mutate(
-#     municipio_2013_f = as.factor(municipio_2013)
-#     )
-#   )
-#   # filter(
-#   #   distrito_2013 == NA
-#   # ) 
-# 
-# ridges_plot <- gdh_ridges |> 
-#   filter(
-#     cod_dist_chr.x != "99",
-#     cod_conc_chr.x != "99" 
-#   )
 
 p8 <- gdh_ridges |>
   group_by(regiao_2024) |> 
@@ -1142,7 +905,6 @@ p8_1 <- gdh_uls |>
 
 p8_1
 
-# fazer por distrito 
 
 p8_2 <- gdh_uls |>
   group_by(dsp) |> 
@@ -1171,16 +933,6 @@ dias_int_sum <-  dias_int_sum |>
   )
 
 
-# p8_4 <- gdh_uls |> 
-#   filter(
-#    1 <= dias_int <10
-#   ) |> 
-#   group_by(idade_cat) |> 
-#   ggplot(aes(x = dias_int, y = idade_cat)) + 
-#   geom_density_ridges() +
-#   theme_classic()
-#   
-# p8_4
 ```
 
 # Visualização dos dados
