@@ -167,7 +167,8 @@ required_packages <- c(
                        "ggridges",
                        "tidymodels",
                        "tidyclust",
-                       "factoextra"
+                       "factoextra",
+                       "rstatix"
                        )    
 
 for (pkg in required_packages) {
@@ -899,48 +900,6 @@ p4_31 <- gdh_uls |>
 
 p4_31
 
-## Idade total por  ULS 
-# p4_32 <- gdh_uls |> 
-#   count(uls_2024, idade_cat) |> 
-#   mutate(
-#     prop_total = n/sum(n)
-#   ) |> 
-#   ggplot() +
-#   geom_bar(
-#     aes(x = uls_2024, y = prop_total, fill = idade_cat),
-#     position = "fill"
-#   ) +
-#   geom_text(
-#     aes(x = prop_total, fill = idade_cat,
-#     label = percent(prop_total, accuracy = 1.0)
-#     ),
-#     stat = "count",# mostrar %
-#     position = position_fill(vjust = 0.5)  
-#   ) +
-#   theme_classic() 
-#   
-# 
-# p4_32
-
-# p4_33 <- gdh_uls |> 
-#   mutate(
-#     idade_cat = cut(idade, c(0, 18, 65, Inf), right = FALSE)
-#   ) |> 
-#   ggplot() +
-#   geom_bar(
-#     aes(x = uls_2024, fill = idade_cat),
-#     position = "fill"
-#   ) +
-#   geom_text(
-#     stat = "count",
-#     aes(label = c(after_stat(prop), "(n)")),
-#     position = position_fill(vjust = 0.5)
-#   ) +
-#   theme_classic() 
-# 
-# 
-# p4_33
-
 ```
 
 ### sexo
@@ -952,10 +911,7 @@ p4_4 <- total_ep_uls |>
   ggplot(aes(x = uls_2024, fill = sexo)) +
   geom_bar(position = "fill") +
   scale_fill_viridis_d(end = .5) +
- # facet_grid(~uls_2024) +
   theme(
-   # axis.text.y = element_blank(),
-    # axis.ticks.y = element_blank(),
     axis.line.x  = element_blank(),
     axis.line.y = element_blank(),
     axis.title.x = element_blank(),
@@ -976,12 +932,12 @@ total_uls_sex_age <- gdh_uls |>
 tabela4 <- tbl_summary(
   gdh_uls,
   include = c(uls_2024, adm_tip, sexo, idade_cat),
-  by = sexo, # Dividir a tabela pelo estado da doença cardíaca
-  missing = "ifany", # Excluir dados ausentes do resumo
+  by = sexo,
+  missing = "ifany", 
 ) |>
   modify_spanning_header(c("stat_1", "stat_2") ~ "**Sexo**") %>%
-  add_n() |>  # Adicionar uma coluna para contar observações não ausentes
-  # add_p() |>  # Realizar testes estatísticos para comparar grupos
+  add_n() |>  
+  add_p() |> 
   modify_header(label = "**Variável**") |>  # Personalizar o cabeçalho da tabela
   bold_labels() # Tornar as etiquetas em negrito para ênfase
 
