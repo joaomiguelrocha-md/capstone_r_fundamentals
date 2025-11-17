@@ -949,17 +949,14 @@ dias_int_sum <-  dias_int_sum |>
 
 ```{r}
 
-
 gdh_model <- gdh_uls |> 
   mutate(
-    sexo = factor(sexo)
+    sexo = as.factor(sexo)
   ) |> 
   filter(
-    dias_int < 50
+    dias_int > 0
   )
-  
 
-gdh_model |>  t_test(idade ~ sexo)
 
 
 model1 <- lm(dias_int ~ idade, data = gdh_model)
@@ -981,12 +978,9 @@ model3 <- lm(dias_int ~ idade + sexo, data = gdh_model)
 model3_tidy <- tidy(model3, conf.int = TRUE)
 model3_tidy
 
-check_model(model3)
+# check_model(model3) (fica a correr e não dá resultado)
 
 # Nenhum destes modelos se adequa ao pretendido 
-
-
-
 ```
 
 # Bibliografia/Referências
