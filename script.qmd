@@ -62,7 +62,13 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
     -   Amadora
 
+        -   Total residentes (2017): 172.324
+
     -   Sintra
+
+        -   Total residentes (2017): 380.125
+
+-   Fonte dados: INE
 
 ## ULS Médio Ave
 
@@ -72,16 +78,18 @@ O trabalho tem como propósito aplicar técnicas de ciência de dados na anális
 
     -   Vila Nova de Famalicão
 
+        -   Total residentes (2017): 132.204
+
     -   Santo Tirso
 
+        -   Total residentes (2017): 68.512
+
     -   Trofa
+
+        -   Total residentes (2017): 38.427
+
+-   Fonte dados: INE
 :::
-
--   Total de residentes (2017)
-
-    ![](images/clipboard-1803662035.png)
-
-    Fonte: INE
 
 ------------------------------------------------------------------------
 
@@ -591,7 +599,7 @@ gdh_uls <- gdh_join_final |>
 
 ```
 
-# Análise Exploratória
+# Visualização dos dados
 
 ### Idade
 
@@ -863,6 +871,7 @@ p7 <- total_mort_apr31 |>
 p7
 
 
+
 p7_1 <- gdh_uls |> 
   count(uls_2024, mortalidade_apr31) |> 
   mutate(freq = (n / sum(n))) |> 
@@ -872,8 +881,7 @@ p7_1 <- gdh_uls |>
     )+
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_viridis_d(end = 0.5) +
-  geom_text(aes(label = percent(freq, 1), (vjust = 1), colour = "white")) +
-  labs(fill = "mortalidade_apr31", y = "Proportion", x = "ULS 2024")
+  labs(fill = "mortalidade_apr31", y = "Proporção", x = "ULS 2024")
 
 p7_1
 
@@ -937,9 +945,45 @@ dias_int_sum <-  dias_int_sum |>
 
 ```
 
-# Visualização dos dados
+# Modelos Estatísticos
 
 ```{r}
+
+
+gdh_model <- gdh_uls |> 
+  mutate(
+    sexo = factor(sexo)
+  ) |> 
+  filter(
+    dias_int < 50
+  )
+  
+
+gdh_model |>  t_test(idade ~ sexo)
+
+
+model1 <- lm(dias_int ~ idade, data = gdh_model)
+
+summary(model1)
+
+model1_tidy <- tidy(model1, conf.int = TRUE)
+model1_tidy
+
+
+model2 <- lm(dias_int ~ idade, data = gdh_model)
+
+summary(model2) 
+
+# Regressão multivariada
+
+model3 <- lm(dias_int ~ idade + sexo, data = gdh_model)
+
+model3_tidy <- tidy(model3, conf.int = TRUE)
+model3_tidy
+
+check_model(model3)
+
+# Nenhum destes modelos se adequa ao pretendido 
 
 
 
